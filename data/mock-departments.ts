@@ -1,0 +1,98 @@
+export const mockDepartments = [
+  {
+    id: 1,
+    name: "Tecnologia da Informação",
+    shortName: "TI",
+    description: "Responsável pela infraestrutura de TI, desenvolvimento de sistemas e suporte técnico.",
+    manager: "João Silva",
+    color: "#3b82f6", // blue
+    status: "active",
+    employeeCount: 15,
+    documentsCount: 120,
+    createdAt: "2023-01-10",
+  },
+  {
+    id: 2,
+    name: "Recursos Humanos",
+    shortName: "RH",
+    description: "Gerencia o capital humano da empresa, incluindo recrutamento, treinamento e benefícios.",
+    manager: "Maria Oliveira",
+    color: "#10b981", // green
+    status: "active",
+    employeeCount: 8,
+    documentsCount: 85,
+    createdAt: "2023-01-15",
+  },
+  {
+    id: 3,
+    name: "Vendas",
+    shortName: "Vendas",
+    description: "Responsável por todas as atividades de vendas e relacionamento com clientes.",
+    manager: "Carlos Souza",
+    color: "#f59e0b", // amber
+    status: "active",
+    employeeCount: 20,
+    documentsCount: 90,
+    createdAt: "2023-02-01",
+  },
+  {
+    id: 4,
+    name: "Financeiro",
+    shortName: "Financeiro",
+    description: "Cuida das finanças da empresa, contabilidade, orçamentos e relatórios financeiros.",
+    manager: "Ana Costa",
+    color: "#8b5cf6", // violet
+    status: "active",
+    employeeCount: 10,
+    documentsCount: 70,
+    createdAt: "2023-02-05",
+  },
+  {
+    id: 5,
+    name: "Diretoria",
+    shortName: "Diretoria",
+    description: "Define as estratégias e diretrizes gerais da empresa.",
+    manager: "Pedro Almeida",
+    color: "#ef4444", // red
+    status: "active",
+    employeeCount: 5,
+    documentsCount: 30,
+    createdAt: "2023-01-01",
+  },
+  {
+    id: 6,
+    name: "Operações",
+    shortName: "Operações",
+    description: "Gerencia as operações diárias, logística e produção.",
+    manager: "Fernanda Lima",
+    color: "#06b6d4", // cyan
+    status: "active",
+    employeeCount: 25,
+    documentsCount: 150,
+    createdAt: "2023-03-10",
+  },
+  {
+    id: 7,
+    name: "Qualidade",
+    shortName: "Qualidade",
+    description: "Assegura a qualidade dos produtos e processos da empresa.",
+    manager: "Roberto Santos",
+    color: "#84cc16", // lime
+    status: "active",
+    employeeCount: 7,
+    documentsCount: 60,
+    createdAt: "2023-03-15",
+  },
+  {
+    id: 8,
+    name: "Jurídico",
+    shortName: "Jurídico",
+    description: "Responsável por questões legais, contratos e conformidade.",
+    manager: "Patrícia Mendes",
+    color: "#f97316", // orange
+    status: "active",
+    employeeCount: 4,
+    documentsCount: 45,
+    createdAt: "2023-04-01",
+  },
+]
