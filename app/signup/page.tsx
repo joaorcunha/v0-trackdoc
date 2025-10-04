@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Building2, Mail, Lock, User, Loader2 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { signupUser } from "@/app/actions/signup"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -64,54 +64,43 @@ export default function SignupPage() {
     }
 
     try {
-      const supabase = createClient()
-
-      // Step 1: Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const result = await signupUser({
         email: formData.email,
         password: formData.password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
-          data: {
-            full_name: formData.fullName,
-            company_name: formData.companyName,
-          },
-        },
+        fullName: formData.fullName,
+        companyName: formData.companyName,
       })
 
-      if (authError) throw authError
-
-      if (!authData.user) {
-        throw new Error("Erro ao criar usuário")
+      if (!result.success) {
+        throw new Error(result.error || "Erro ao criar conta")
       }
 
-      // Step 2: Create company and admin profile using RPC function
-      const { data: companyData, error: companyError } = await supabase.rpc("create_company_with_admin", {
-        p_company_name: formData.companyName,
-        p_user_id: authData.user.id,
-        p_user_email: formData.email,
-        p_user_full_name: formData.fullName,
-      })
+      console.log("[v0] Cadastro concluído com sucesso, userId:", result.userId)
 
-      if (companyError) throw companyError
-
-      if (!companyData.success) {
-        throw new Error(companyData.error || "Erro ao criar empresa")
-      }
-
-      // Success! Redirect to confirmation page
-      router.push("/signup/success")
+      // Success! Redirect to login page
+      router.push(`/signup/success?email=${encodeURIComponent(formData.email)}`)
     } catch (err: any) {
-      console.error("Erro no cadastro:", err)
-      setError(err.message || "Erro ao criar conta. Tente novamente.")
+      console.error("[v0] Erro no cadastro:", err)
+
+      let errorMessage = "Erro ao criar conta. Tente novamente."
+
+      if (err.message?.includes("already registered") || err.message?.includes("already exists")) {
+        errorMessage = "Este email já está cadastrado. Tente fazer login."
+      } else if (err.message?.includes("Invalid email")) {
+        errorMessage = "Email inválido. Verifique e tente novamente."
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-      <Card className="w-full max-w-lg">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-lg bg-white">
         <CardHeader className="space-y-1 text-center">
           <div className="mx-auto mb-4 flex justify-center">
             <Image

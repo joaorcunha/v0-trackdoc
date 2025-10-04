@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { loginUser } from "@/app/actions/login"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -59,32 +60,28 @@ export default function LoginPage() {
     setError("")
 
     try {
-      // Simular chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      console.log("[v0] Tentando fazer login...")
 
-      // Verificar credenciais (simulado)
-      if (formData.email === "admin@trackdoc.com" && formData.password === "123456") {
-        setSuccess("Login realizado com sucesso!")
+      const result = await loginUser({
+        email: formData.email,
+        password: formData.password,
+      })
 
-        // Salvar dados de autenticação (simulado)
-        localStorage.setItem("isAuthenticated", "true")
-        localStorage.setItem("userEmail", formData.email)
-        localStorage.setItem("userName", "João Silva")
-        localStorage.setItem("userRole", "Administrador")
-
-        if (formData.rememberMe) {
-          localStorage.setItem("rememberMe", "true")
-        }
-
-        // Redirecionar para o dashboard
-        setTimeout(() => {
-          router.push("/")
-        }, 1000)
-      } else {
-        setError("Email ou senha incorretos")
+      if (!result.success) {
+        setError(result.error || "Erro ao fazer login")
+        return
       }
-    } catch (err) {
-      setError("Erro interno do servidor. Tente novamente.")
+
+      setSuccess("Login realizado com sucesso!")
+
+      // Redirect to dashboard
+      setTimeout(() => {
+        router.push("/")
+        router.refresh()
+      }, 1000)
+    } catch (err: any) {
+      console.error("[v0] Erro no login:", err)
+      setError("Erro ao fazer login. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -100,7 +97,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo e Header */}
         <div className="text-center mb-8 py-0">
@@ -118,7 +115,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card de Login */}
-        <Card className="shadow-xl border-0">
+        <Card className="shadow-xl border-0 bg-white">
           <CardHeader className="space-y-1 pb-6">
             <CardTitle className="text-2xl font-bold text-center">Entrar na sua conta</CardTitle>
             <CardDescription className="text-center">Digite suas credenciais para acessar o sistema</CardDescription>
@@ -226,19 +223,6 @@ export default function LoginPage() {
               <Button variant="outline" className="w-full bg-transparent" type="button" onClick={handleSignupClick}>
                 Criar conta grátis
               </Button>
-            </div>
-
-            {/* Credenciais de Demonstração */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-2">Credenciais de demonstração:</p>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p>
-                  <strong>Email:</strong> admin@trackdoc.com
-                </p>
-                <p>
-                  <strong>Senha:</strong> 123456
-                </p>
-              </div>
             </div>
           </CardContent>
         </Card>
