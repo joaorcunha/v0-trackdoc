@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Building2, Mail, Lock, User, Loader2 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -112,8 +113,15 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Building2 className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-4 flex justify-center">
+            <Image
+              src="/images/logo-trackdoc-horizontal.png"
+              alt="Trackdoc"
+              width={200}
+              height={57}
+              priority
+              className="h-auto w-auto max-w-[200px]"
+            />
           </div>
           <CardTitle className="text-2xl font-bold">Crie sua conta</CardTitle>
           <CardDescription>Comece seu período de teste gratuito de 7 dias</CardDescription>

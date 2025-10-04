@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, FileText, Loader2, AlertCircle, CheckCircle } from "lucide-react"
+import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -94,15 +95,25 @@ export default function LoginPage() {
     alert("Funcionalidade de recuperação de senha será implementada em breve.")
   }
 
+  const handleSignupClick = () => {
+    router.push("/signup")
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo e Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
-            <FileText className="h-8 w-8 text-white" />
+        <div className="text-center mb-8 py-0">
+          <div className="flex justify-center mb-0.5">
+            <Image
+              src="/images/logo-trackdoc-horizontal.png"
+              alt="Trackdoc"
+              width={200}
+              height={57}
+              priority
+              className="h-auto w-auto max-w-[200px]"
+            />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">TrackDoc</h1>
           <p className="text-gray-600">Gestão de Documentos</p>
         </div>
 
@@ -210,6 +221,13 @@ export default function LoginPage() {
               </Button>
             </form>
 
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600 mb-3">Não tem uma conta?</p>
+              <Button variant="outline" className="w-full bg-transparent" type="button" onClick={handleSignupClick}>
+                Criar conta grátis
+              </Button>
+            </div>
+
             {/* Credenciais de Demonstração */}
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
               <p className="text-sm font-medium text-gray-700 mb-2">Credenciais de demonstração:</p>
@@ -227,7 +245,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500">
-          <p>© 2024 TrackDoc. Todos os direitos reservados.</p>
+          <p>© 2025 TrackDoc. Todos os direitos reservados.</p>
           <div className="flex justify-center space-x-4 mt-2">
             <Button variant="link" className="px-0 text-gray-500 hover:text-gray-700">
               Termos de Uso

@@ -18,8 +18,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   useEffect(() => {
     const checkAuth = () => {
-      // Verificar se está na página de login
-      if (pathname === "/login") {
+      const publicRoutes = ["/login", "/signup", "/signup/success"]
+      const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
+
+      // Verificar se está em uma rota pública
+      if (isPublicRoute) {
         setIsLoading(false)
         return
       }
@@ -53,8 +56,10 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     )
   }
 
-  // Se estiver na página de login, mostrar sem verificação
-  if (pathname === "/login") {
+  const publicRoutes = ["/login", "/signup", "/signup/success"]
+  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
+
+  if (isPublicRoute) {
     return <>{children}</>
   }
 
