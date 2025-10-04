@@ -68,7 +68,7 @@ export async function signupUser(data: SignupData): Promise<SignupResult> {
     const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
       email: data.email,
       password: data.password,
-      email_confirm: false, // Send confirmation email
+      email_confirm: false, // This will send confirmation email if SMTP is configured
       user_metadata: {
         full_name: data.fullName,
         company_name: data.companyName,
@@ -132,6 +132,35 @@ export async function signupUser(data: SignupData): Promise<SignupResult> {
     }
 
     console.log("[v0] Server: Perfil criado com sucesso")
+
+    try {
+      const redirectTo = process.env.NEXT_PUBLIC_SITE_URL
+        ? `${process.env.NEXT_PUBLIC_SITE_URL}/login`
+        : "http://localhost:3000/login"
+
+      console.log("[v0] Server: Gerando link de confirmação com redirect para:", redirectTo)
+
+      const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+        type: "signup",
+        email: data.email,
+        options: {
+          redirectTo,
+        },
+      })
+
+      if (linkError) {
+        console.error("[v0] Server: Erro ao gerar link de confirmação:", linkError)
+        // Don't fail the signup, just log the error
+        console.log("[v0] Server: Email de confirmação não foi enviado, mas o usuário foi criado")
+      } else {
+        console.log("[v0] Server: Link de confirmação gerado com sucesso")
+        console.log("[v0] Server: IMPORTANTE - Configure o SMTP no Supabase para enviar emails automaticamente")
+        console.log("[v0] Server: Link de confirmação (para desenvolvimento):", linkData.properties?.action_link)
+      }
+    } catch (emailError) {
+      console.error("[v0] Server: Erro ao enviar email de confirmação:", emailError)
+      // Don't fail the signup, just log the error
+    }
 
     return {
       success: true,
