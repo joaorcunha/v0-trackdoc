@@ -306,7 +306,34 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
         </CardContent>
       </Card>
 
-      {viewMode === "grid" ? (
+      {filteredTypes.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="rounded-full bg-muted p-6 mb-4">
+              <FileText className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">
+              {searchTerm ? "Nenhum tipo encontrado" : "Nenhum tipo de documento cadastrado"}
+            </h3>
+            <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
+              {searchTerm
+                ? `Não encontramos tipos de documento que correspondam a "${searchTerm}". Tente buscar com outros termos.`
+                : "Comece criando seu primeiro tipo de documento para organizar e categorizar seus documentos."}
+            </p>
+            {!searchTerm && (
+              <Button onClick={() => setShowTypeModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Primeiro Tipo
+              </Button>
+            )}
+            {searchTerm && (
+              <Button variant="outline" onClick={() => setSearchTerm("")}>
+                Limpar Busca
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 lg:col-span-3 xl:grid-cols-3 gap-6">
           {filteredTypes.map((type) => (
             <Card key={type.id}>

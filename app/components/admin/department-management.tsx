@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useToast } from "@/hooks/use-toast"
 import {
   Plus,
   Search,
@@ -38,7 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-import { mockDepartments as initialMockDepartments } from "@/data/mock-departments"
+import { getDepartments, createDepartment, updateDepartment, deleteDepartment } from "@/app/admin/actions"
 
 const colorOptions = [
   { value: "#3b82f6", label: "Azul", class: "bg-blue-500" },
@@ -59,21 +60,33 @@ const statusColors = {
 }
 
 export default function DepartmentManagement() {
-  const [departments, setDepartments] = useState(initialMockDepartments)
+  const [departments, setDepartments] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDepartment, setSelectedDepartment] = useState(null)
   const [showDepartmentModal, setShowDepartmentModal] = useState(false)
   const [statusFilter, setStatusFilter] = useState("all")
-  const [viewMode, setViewMode] = useState("list") // "grid" ou "list"
-
+  const [viewMode, setViewMode] = useState("list")
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [departmentToDelete, setDepartmentToDelete] = useState(null)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    loadDepartments()
+  }, [])
+
+  const loadDepartments = async () => {
+    setLoading(true)
+    const data = await getDepartments()
+    setDepartments(data)
+    setLoading(false)
+  }
 
   const filteredDepartments = departments.filter((dept) => {
     const matchesSearch =
-      dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dept.shortName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dept.manager.toLowerCase().includes(searchTerm.toLowerCase())
+      dept.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dept.shortName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dept.manager?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || dept.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -82,33 +95,87 @@ export default function DepartmentManagement() {
     total: departments.length,
     active: departments.filter((d) => d.status === "active").length,
     inactive: departments.filter((d) => d.status === "inactive").length,
-    totalEmployees: departments.reduce((sum, d) => sum + d.employeeCount, 0),
-    totalDocuments: departments.reduce((sum, d) => sum + d.documentsCount, 0),
+    totalEmployees: departments.reduce((sum, d) => sum + (d.employeeCount || 0), 0),
+    totalDocuments: departments.reduce((sum, d) => sum + (d.documentsCount || 0), 0),
   }
 
-  const handleSaveDepartment = (departmentData) => {
-    if (selectedDepartment) {
-      // Editar departamento existente
-      setDepartments((deps) => deps.map((d) => (d.id === selectedDepartment.id ? { ...d, ...departmentData } : d)))
-    } else {
-      // Criar novo departamento
-      const newDepartment = {
-        ...departmentData,
-        id: Date.now(),
-        employeeCount: 0,
-        documentsCount: 0,
-        createdAt: new Date().toISOString().split("T")[0],
+  const handleSaveDepartment = async (departmentData) => {
+    try {
+      if (selectedDepartment) {
+        const result = await updateDepartment(selectedDepartment.id, departmentData)
+        if (result.success) {
+          toast({
+            title: "Departamento atualizado",
+            description: "O departamento foi atualizado com sucesso.",
+          })
+          await loadDepartments()
+        } else {
+          toast({
+            title: "Erro ao atualizar departamento",
+            description: result.error,
+            variant: "destructive",
+          })
+        }
+      } else {
+        const result = await createDepartment(departmentData)
+        if (result.success) {
+          toast({
+            title: "Departamento criado",
+            description: "O departamento foi criado com sucesso.",
+          })
+          await loadDepartments()
+        } else {
+          toast({
+            title: "Erro ao criar departamento",
+            description: result.error,
+            variant: "destructive",
+          })
+        }
       }
-      setDepartments((deps) => [...deps, newDepartment])
+      setShowDepartmentModal(false)
+      setSelectedDepartment(null)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar o departamento.",
+        variant: "destructive",
+      })
     }
-    setShowDepartmentModal(false)
-    setSelectedDepartment(null)
   }
 
-  const handleDeleteDepartment = () => {
-    setDepartments((deps) => deps.filter((d) => d.id !== departmentToDelete.id))
-    setShowDeleteConfirm(false)
-    setDepartmentToDelete(null)
+  const handleDeleteDepartment = async () => {
+    try {
+      const result = await deleteDepartment(departmentToDelete.id)
+      if (result.success) {
+        toast({
+          title: "Departamento excluído",
+          description: "O departamento foi excluído com sucesso.",
+        })
+        await loadDepartments()
+      } else {
+        toast({
+          title: "Erro ao excluir departamento",
+          description: result.error,
+          variant: "destructive",
+        })
+      }
+      setShowDeleteConfirm(false)
+      setDepartmentToDelete(null)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao excluir o departamento.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
   }
 
   return (
@@ -244,9 +311,34 @@ export default function DepartmentManagement() {
         <Card>
           <CardContent className="p-0">
             {filteredDepartments.length === 0 ? (
-              <div className="text-center py-8">
-                <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-500">Nenhum departamento encontrado.</p>
+              <div className="text-center py-12">
+                <Building2 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                {searchTerm || statusFilter !== "all" ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum departamento encontrado</h3>
+                    <p className="text-gray-500 mb-4">
+                      Não encontramos departamentos que correspondam aos filtros aplicados
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSearchTerm("")
+                        setStatusFilter("all")
+                      }}
+                    >
+                      Limpar filtros
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum departamento cadastrado</h3>
+                    <p className="text-gray-500 mb-4">Comece organizando sua empresa criando o primeiro departamento</p>
+                    <Button onClick={() => setShowDepartmentModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar Primeiro Departamento
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="divide-y">
@@ -256,14 +348,14 @@ export default function DepartmentManagement() {
                       <div className="flex items-center space-x-4">
                         <div
                           className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: department.color }}
+                          style={{ backgroundColor: department.color || "#3b82f6" }}
                         >
-                          {department.shortName.substring(0, 2).toUpperCase()}
+                          {(department.shortName || department.name || "DP").substring(0, 2).toUpperCase()}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-1">
                             <h3 className="text-lg font-semibold">{department.name}</h3>
-                            <Badge className={statusColors[department.status]}>
+                            <Badge className={statusColors[department.status] || statusColors.active}>
                               {department.status === "active" ? "Ativo" : "Inativo"}
                             </Badge>
                           </div>
@@ -273,20 +365,22 @@ export default function DepartmentManagement() {
                               <Avatar className="h-6 w-6">
                                 <AvatarFallback className="text-xs">
                                   {department.manager
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
+                                    ? department.manager
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")
+                                    : "??"}
                                 </AvatarFallback>
                               </Avatar>
-                              <span>{department.manager}</span>
+                              <span>{department.manager || "Não definido"}</span>
                             </div>
                             <div className="flex items-center space-x-1">
                               <Users className="h-4 w-4" />
-                              <span>{department.employeeCount} funcionários</span>
+                              <span>{department.employeeCount || 0} funcionários</span>
                             </div>
                             <div className="flex items-center space-x-1">
                               <FileText className="h-4 w-4" />
-                              <span>{department.documentsCount} documentos</span>
+                              <span>{department.documentsCount || 0} documentos</span>
                             </div>
                           </div>
                         </div>
@@ -331,9 +425,34 @@ export default function DepartmentManagement() {
         <div className="grid grid-cols-1 lg:col-span-3 xl:grid-cols-3 gap-6">
           {filteredDepartments.length === 0 ? (
             <Card className="lg:col-span-3">
-              <CardContent className="text-center py-8">
-                <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-500">Nenhum departamento encontrado.</p>
+              <CardContent className="text-center py-12">
+                <Building2 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                {searchTerm || statusFilter !== "all" ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum departamento encontrado</h3>
+                    <p className="text-gray-500 mb-4">
+                      Não encontramos departamentos que correspondam aos filtros aplicados
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSearchTerm("")
+                        setStatusFilter("all")
+                      }}
+                    >
+                      Limpar filtros
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum departamento cadastrado</h3>
+                    <p className="text-gray-500 mb-4">Comece organizando sua empresa criando o primeiro departamento</p>
+                    <Button onClick={() => setShowDepartmentModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar Primeiro Departamento
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -344,17 +463,17 @@ export default function DepartmentManagement() {
                     <div className="flex items-center space-x-3">
                       <div
                         className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold"
-                        style={{ backgroundColor: department.color }}
+                        style={{ backgroundColor: department.color || "#3b82f6" }}
                       >
-                        {department.shortName.substring(0, 2).toUpperCase()}
+                        {(department.shortName || department.name || "DP").substring(0, 2).toUpperCase()}
                       </div>
                       <div>
                         <CardTitle className="text-lg">{department.name}</CardTitle>
-                        <p className="text-sm text-gray-500">{department.shortName}</p>
+                        <p className="text-sm text-gray-500">{department.shortName || "N/A"}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge className={statusColors[department.status]}>
+                      <Badge className={statusColors[department.status] || statusColors.active}>
                         {department.status === "active" ? "Ativo" : "Inativo"}
                       </Badge>
                       <DropdownMenu>
@@ -396,24 +515,26 @@ export default function DepartmentManagement() {
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="text-xs">
                           {department.manager
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
+                            ? department.manager
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                            : "??"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium">{department.manager}</p>
+                        <p className="text-sm font-medium">{department.manager || "Não definido"}</p>
                         <p className="text-xs text-gray-500">Gerente</p>
                       </div>
                     </div>
                     {/* Stats */}
                     <div className="grid grid-cols-2 gap-4 text-center">
                       <div>
-                        <p className="text-lg font-bold text-blue-600">{department.employeeCount}</p>
+                        <p className="text-lg font-bold text-blue-600">{department.employeeCount || 0}</p>
                         <p className="text-xs text-gray-500">Funcionários</p>
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-green-600">{department.documentsCount}</p>
+                        <p className="text-lg font-bold text-green-600">{department.documentsCount || 0}</p>
                         <p className="text-xs text-gray-500">Documentos</p>
                       </div>
                     </div>

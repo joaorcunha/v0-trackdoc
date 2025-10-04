@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 import {
   Plus,
   Search,
@@ -34,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { mockCategories } from "@/data/mock-categories"
+import { getCategories, createCategory, updateCategory, deleteCategory } from "@/app/admin/actions"
 
 const colorOptions = [
   { value: "red", label: "Vermelho", class: "bg-red-100 text-red-800" },
@@ -53,13 +54,26 @@ const statusColors = {
 }
 
 export default function CategoryManagement() {
-  const [categories, setCategories] = useState(mockCategories)
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [categoryToDelete, setCategoryToDelete] = useState(null)
   const [viewMode, setViewMode] = useState("list")
+  const { toast } = useToast()
+
+  useEffect(() => {
+    loadCategories()
+  }, [])
+
+  const loadCategories = async () => {
+    setLoading(true)
+    const data = await getCategories()
+    setCategories(data)
+    setLoading(false)
+  }
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -74,35 +88,83 @@ export default function CategoryManagement() {
     totalDocuments: categories.reduce((sum, c) => sum + c.documentsCount, 0),
   }
 
-  const handleSaveCategory = (categoryData) => {
-    if (selectedCategory) {
-      // Editar categoria existente
-      setCategories((cats) =>
-        cats.map((cat) =>
-          cat.id === selectedCategory.id
-            ? { ...cat, ...categoryData, updatedAt: new Date().toISOString().split("T")[0] }
-            : cat,
-        ),
-      )
-    } else {
-      // Criar nova categoria
-      const newCategory = {
-        id: Date.now(),
-        ...categoryData,
-        documentsCount: 0,
-        createdAt: new Date().toISOString().split("T")[0],
-        updatedAt: new Date().toISOString().split("T")[0],
+  const handleSaveCategory = async (categoryData) => {
+    try {
+      if (selectedCategory) {
+        const result = await updateCategory(selectedCategory.id, categoryData)
+        if (result.success) {
+          toast({
+            title: "Categoria atualizada",
+            description: "A categoria foi atualizada com sucesso.",
+          })
+          await loadCategories()
+        } else {
+          toast({
+            title: "Erro ao atualizar categoria",
+            description: result.error,
+            variant: "destructive",
+          })
+        }
+      } else {
+        const result = await createCategory(categoryData)
+        if (result.success) {
+          toast({
+            title: "Categoria criada",
+            description: "A categoria foi criada com sucesso.",
+          })
+          await loadCategories()
+        } else {
+          toast({
+            title: "Erro ao criar categoria",
+            description: result.error,
+            variant: "destructive",
+          })
+        }
       }
-      setCategories((cats) => [...cats, newCategory])
+      setShowCategoryModal(false)
+      setSelectedCategory(null)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar a categoria.",
+        variant: "destructive",
+      })
     }
-    setShowCategoryModal(false)
-    setSelectedCategory(null)
   }
 
-  const handleDeleteCategory = () => {
-    setCategories((cats) => cats.filter((cat) => cat.id !== categoryToDelete.id))
-    setShowDeleteConfirm(false)
-    setCategoryToDelete(null)
+  const handleDeleteCategory = async () => {
+    try {
+      const result = await deleteCategory(categoryToDelete.id)
+      if (result.success) {
+        toast({
+          title: "Categoria excluída",
+          description: "A categoria foi excluída com sucesso.",
+        })
+        await loadCategories()
+      } else {
+        toast({
+          title: "Erro ao excluir categoria",
+          description: result.error,
+          variant: "destructive",
+        })
+      }
+      setShowDeleteConfirm(false)
+      setCategoryToDelete(null)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao excluir a categoria.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
   }
 
   return (
@@ -212,9 +274,30 @@ export default function CategoryManagement() {
         <div className="grid grid-cols-1 lg:col-span-3 xl:grid-cols-3 gap-6">
           {filteredCategories.length === 0 ? (
             <Card className="lg:col-span-3">
-              <CardContent className="text-center py-8">
-                <Tag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-500">Nenhuma categoria encontrada.</p>
+              <CardContent className="text-center py-12">
+                <Tag className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                {searchTerm ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhuma categoria encontrada</h3>
+                    <p className="text-gray-500 mb-4">
+                      Não encontramos categorias que correspondam à sua busca "{searchTerm}"
+                    </p>
+                    <Button variant="outline" onClick={() => setSearchTerm("")}>
+                      Limpar busca
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhuma categoria cadastrada</h3>
+                    <p className="text-gray-500 mb-4">
+                      Crie sua primeira categoria para organizar melhor os documentos
+                    </p>
+                    <Button onClick={() => setShowCategoryModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar Primeira Categoria
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -288,9 +371,30 @@ export default function CategoryManagement() {
         <Card>
           <CardContent className="p-0">
             {filteredCategories.length === 0 ? (
-              <div className="text-center py-8">
-                <Tag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-500">Nenhuma categoria encontrada.</p>
+              <div className="text-center py-12">
+                <Tag className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                {searchTerm ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhuma categoria encontrada</h3>
+                    <p className="text-gray-500 mb-4">
+                      Não encontramos categorias que correspondam à sua busca "{searchTerm}"
+                    </p>
+                    <Button variant="outline" onClick={() => setSearchTerm("")}>
+                      Limpar busca
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhuma categoria cadastrada</h3>
+                    <p className="text-gray-500 mb-4">
+                      Crie sua primeira categoria para organizar melhor os documentos
+                    </p>
+                    <Button onClick={() => setShowCategoryModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar Primeira Categoria
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="divide-y">

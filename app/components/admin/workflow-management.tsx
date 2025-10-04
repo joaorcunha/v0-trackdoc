@@ -8,7 +8,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
 import {
   Plus,
   Search,
@@ -36,6 +37,8 @@ import {
   LayoutGrid,
   List,
 } from "lucide-react"
+
+import { getWorkflows, createWorkflow, updateWorkflow, deleteWorkflow } from "@/app/admin/actions"
 
 const mockWorkflows = [
   {
@@ -97,7 +100,8 @@ const documentStatusLabels = {
 }
 
 export default function WorkflowManagement() {
-  const [workflows, setWorkflows] = useState(mockWorkflows)
+  const [workflows, setWorkflows] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedWorkflow, setSelectedWorkflow] = useState(null)
   const [showWorkflowModal, setShowWorkflowModal] = useState(false)
@@ -107,6 +111,18 @@ export default function WorkflowManagement() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [workflowToDelete, setWorkflowToDelete] = useState(null)
   const [viewMode, setViewMode] = useState<"grid" | "list">("list")
+  const { toast } = useToast()
+
+  useEffect(() => {
+    loadWorkflows()
+  }, [])
+
+  const loadWorkflows = async () => {
+    setLoading(true)
+    const data = await getWorkflows()
+    setWorkflows(data)
+    setLoading(false)
+  }
 
   const filteredWorkflows = workflows.filter((workflow) =>
     (workflow.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
@@ -126,29 +142,83 @@ export default function WorkflowManagement() {
     setShowDocumentsModal(true)
   }
 
-  const handleSaveWorkflow = (workflowData) => {
-    if (workflowData.id) {
-      setWorkflows((prevWorkflows) =>
-        prevWorkflows.map((workflow) =>
-          workflow.id === workflowData.id ? { ...workflow, ...workflowData } : workflow,
-        ),
-      )
-    } else {
-      const newWorkflow = {
-        id: Date.now(),
-        ...workflowData,
-        documentsCount: 0,
+  const handleSaveWorkflow = async (workflowData) => {
+    try {
+      if (workflowData.id) {
+        const result = await updateWorkflow(workflowData.id, workflowData)
+        if (result.success) {
+          toast({
+            title: "Fluxo atualizado",
+            description: "O fluxo de aprovação foi atualizado com sucesso.",
+          })
+          await loadWorkflows()
+        } else {
+          toast({
+            title: "Erro ao atualizar fluxo",
+            description: result.error,
+            variant: "destructive",
+          })
+        }
+      } else {
+        const result = await createWorkflow(workflowData)
+        if (result.success) {
+          toast({
+            title: "Fluxo criado",
+            description: "O fluxo de aprovação foi criado com sucesso.",
+          })
+          await loadWorkflows()
+        } else {
+          toast({
+            title: "Erro ao criar fluxo",
+            description: result.error,
+            variant: "destructive",
+          })
+        }
       }
-      setWorkflows((prevWorkflows) => [...prevWorkflows, newWorkflow])
+      setShowWorkflowModal(false)
+      setSelectedWorkflow(null)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar o fluxo de aprovação.",
+        variant: "destructive",
+      })
     }
-    setShowWorkflowModal(false)
-    setSelectedWorkflow(null)
   }
 
-  const handleDeleteWorkflow = () => {
-    setWorkflows((prevWorkflows) => prevWorkflows.filter((workflow) => workflow.id !== workflowToDelete.id))
-    setShowDeleteConfirm(false)
-    setWorkflowToDelete(null)
+  const handleDeleteWorkflow = async () => {
+    try {
+      const result = await deleteWorkflow(workflowToDelete.id)
+      if (result.success) {
+        toast({
+          title: "Fluxo excluído",
+          description: "O fluxo de aprovação foi excluído com sucesso.",
+        })
+        await loadWorkflows()
+      } else {
+        toast({
+          title: "Erro ao excluir fluxo",
+          description: result.error,
+          variant: "destructive",
+        })
+      }
+      setShowDeleteConfirm(false)
+      setWorkflowToDelete(null)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao excluir o fluxo de aprovação.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
   }
 
   return (
@@ -249,151 +319,209 @@ export default function WorkflowManagement() {
 
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredWorkflows.map((workflow) => (
-            <Card key={workflow.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{workflow.name}</CardTitle>
-                    <p className="text-sm text-gray-500 mt-1">{workflow.description}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={statusColors[workflow.status]}>
-                      {workflow.status === "active" ? "Ativo" : "Inativo"}
-                    </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedWorkflow(workflow)
-                            setShowWorkflowModal(true)
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => {
-                            setWorkflowToDelete(workflow)
-                            setShowDeleteConfirm(true)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium mb-2">Tipos de Documento:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {workflow.documentTypes.map((type) => (
-                        <Badge key={type} variant="outline">
-                          {type}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium mb-2">Fluxo de Aprovação:</p>
-                    <div className="space-y-2">
-                      {workflow.steps.map((step, index) => (
-                        <div key={step.id} className="flex items-center space-x-2">
-                          <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-medium">
-                            {index + 1}
-                          </div>
-                          <span className="text-sm font-medium">{step.name}</span>
-                          {step.required && <Badge variant="secondary">Obrigatório</Badge>}
-                          {index < workflow.steps.length - 1 && <ArrowRight className="h-3 w-3 text-gray-400" />}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
-                    <button
-                      onClick={() => handleShowWorkflowDocuments(workflow)}
-                      className="text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                    >
-                      {workflow.documentsCount} documentos usando este fluxo
-                    </button>
-                    <span>{workflow.steps.length} etapas</span>
-                  </div>
-                </div>
+          {filteredWorkflows.length === 0 ? (
+            <Card className="lg:col-span-2">
+              <CardContent className="text-center py-12">
+                <GitBranch className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                {searchTerm ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum fluxo encontrado</h3>
+                    <p className="text-gray-500 mb-4">
+                      Não encontramos fluxos que correspondam à sua busca "{searchTerm}"
+                    </p>
+                    <Button variant="outline" onClick={() => setSearchTerm("")}>
+                      Limpar busca
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum fluxo de aprovação configurado</h3>
+                    <p className="text-gray-500 mb-4">
+                      Crie seu primeiro fluxo de aprovação para automatizar processos
+                    </p>
+                    <Button onClick={() => setShowWorkflowModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar Primeiro Fluxo
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            filteredWorkflows.map((workflow) => (
+              <Card key={workflow.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{workflow.name}</CardTitle>
+                      <p className="text-sm text-gray-500 mt-1">{workflow.description}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge className={statusColors[workflow.status]}>
+                        {workflow.status === "active" ? "Ativo" : "Inativo"}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedWorkflow(workflow)
+                              setShowWorkflowModal(true)
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => {
+                              setWorkflowToDelete(workflow)
+                              setShowDeleteConfirm(true)
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium mb-2">Tipos de Documento:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {workflow.documentTypes.map((type) => (
+                          <Badge key={type} variant="outline">
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium mb-2">Fluxo de Aprovação:</p>
+                      <div className="space-y-2">
+                        {workflow.steps.map((step, index) => (
+                          <div key={step.id} className="flex items-center space-x-2">
+                            <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-medium">
+                              {index + 1}
+                            </div>
+                            <span className="text-sm font-medium">{step.name}</span>
+                            {step.required && <Badge variant="secondary">Obrigatório</Badge>}
+                            {index < workflow.steps.length - 1 && <ArrowRight className="h-3 w-3 text-gray-400" />}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
+                      <button
+                        onClick={() => handleShowWorkflowDocuments(workflow)}
+                        className="text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                      >
+                        {workflow.documentsCount} documentos usando este fluxo
+                      </button>
+                      <span>{workflow.steps.length} etapas</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       ) : (
         <Card>
           <CardContent className="p-0">
-            <div className="space-y-0">
-              {filteredWorkflows.map((workflow, index) => (
-                <div key={workflow.id} className={`p-4 ${index !== filteredWorkflows.length - 1 ? "border-b" : ""}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 flex-1">
-                      <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                        <GitBranch className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-4">
-                          <h3 className="font-medium text-lg">{workflow.name}</h3>
-                          <Badge className={statusColors[workflow.status]} variant="secondary">
-                            {workflow.status === "active" ? "Ativo" : "Inativo"}
-                          </Badge>
+            {filteredWorkflows.length === 0 ? (
+              <div className="text-center py-12">
+                <GitBranch className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                {searchTerm ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum fluxo encontrado</h3>
+                    <p className="text-gray-500 mb-4">
+                      Não encontramos fluxos que correspondam à sua busca "{searchTerm}"
+                    </p>
+                    <Button variant="outline" onClick={() => setSearchTerm("")}>
+                      Limpar busca
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum fluxo de aprovação configurado</h3>
+                    <p className="text-gray-500 mb-4">
+                      Crie seu primeiro fluxo de aprovação para automatizar processos
+                    </p>
+                    <Button onClick={() => setShowWorkflowModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar Primeiro Fluxo
+                    </Button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-0">
+                {filteredWorkflows.map((workflow, index) => (
+                  <div key={workflow.id} className={`p-4 ${index !== filteredWorkflows.length - 1 ? "border-b" : ""}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 flex-1">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                          <GitBranch className="h-4 w-4" />
                         </div>
-                        <div className="flex items-center space-x-6 text-sm text-gray-500 mt-1">
-                          <span>{workflow.steps.length} etapas</span>
-                          <span>{workflow.documentsCount} documentos</span>
-                          <span>Tipos: {workflow.documentTypes.join(", ")}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-4">
+                            <h3 className="font-medium text-lg">{workflow.name}</h3>
+                            <Badge className={statusColors[workflow.status]} variant="secondary">
+                              {workflow.status === "active" ? "Ativo" : "Inativo"}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center space-x-6 text-sm text-gray-500 mt-1">
+                            <span>{workflow.steps.length} etapas</span>
+                            <span>{workflow.documentsCount} documentos</span>
+                            <span>Tipos: {workflow.documentTypes.join(", ")}</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">{workflow.description}</p>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{workflow.description}</p>
                       </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedWorkflow(workflow)
+                              setShowWorkflowModal(true)
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => {
+                              setWorkflowToDelete(workflow)
+                              setShowDeleteConfirm(true)
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedWorkflow(workflow)
-                            setShowWorkflowModal(true)
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => {
-                            setWorkflowToDelete(workflow)
-                            setShowDeleteConfirm(true)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

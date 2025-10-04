@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
+import { useToast } from "@/hooks/use-toast"
 import {
   Users,
   Plus,
@@ -37,6 +38,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
+import { getUsers, updateUser, deleteUser } from "@/app/admin/actions"
+
 // Função para gerar iniciais do nome completo
 const getInitials = (fullName: string) => {
   const names = fullName.trim().split(" ")
@@ -45,9 +48,6 @@ const getInitials = (fullName: string) => {
   }
   return (names[0][0] + names[names.length - 1][0]).toUpperCase()
 }
-
-// Dados fictícios removidos para testes em produção
-const mockUsers = []
 
 const roleColors = {
   Administrador: "bg-red-100 text-red-800",
@@ -62,39 +62,86 @@ const statusColors = {
 }
 
 export default function UserManagement() {
-  const [users, setUsers] = useState(mockUsers)
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedUser, setSelectedUser] = useState(null)
   const [showUserModal, setShowUserModal] = useState(false)
   const [showPermissionsModal, setShowPermissionsModal] = useState(false)
-  const [showEmailModal, setShowEmailModal] = useState(false)
-  const [emailSending, setEmailSending] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
-  const [newUserEmail, setNewUserEmail] = useState("")
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [userToDelete, setUserToDelete] = useState(null)
+  const { toast } = useToast()
 
-  const handleSaveUser = (userData) => {
-    if (userData.id) {
-      // Editar usuário existente
-      setUsers((prevUsers) => prevUsers.map((user) => (user.id === userData.id ? { ...user, ...userData } : user)))
-    } else {
-      // Criar novo usuário
-      const newUser = {
-        id: Date.now(), // ID temporário
-        ...userData,
-        lastLogin: new Date().toLocaleDateString("pt-BR"), // Data de login fictícia
-      }
-      setUsers((prevUsers) => [...prevUsers, newUser])
-    }
-    setShowUserModal(false)
-    setSelectedUser(null)
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  const loadUsers = async () => {
+    setLoading(true)
+    const data = await getUsers()
+    setUsers(data)
+    setLoading(false)
   }
 
-  const handleDeleteUser = () => {
-    setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userToDelete.id))
-    setShowDeleteConfirm(false)
-    setUserToDelete(null)
+  const handleSaveUser = async (userData) => {
+    try {
+      if (userData.id) {
+        const result = await updateUser(userData.id, userData)
+        if (result.success) {
+          toast({
+            title: "Usuário atualizado",
+            description: "O usuário foi atualizado com sucesso.",
+          })
+          await loadUsers()
+        } else {
+          toast({
+            title: "Erro ao atualizar usuário",
+            description: result.error,
+            variant: "destructive",
+          })
+        }
+      } else {
+        toast({
+          title: "Novo usuário",
+          description: "Para criar novos usuários, use a funcionalidade de convite por email.",
+        })
+      }
+      setShowUserModal(false)
+      setSelectedUser(null)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar o usuário.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteUser = async () => {
+    try {
+      const result = await deleteUser(userToDelete.id)
+      if (result.success) {
+        toast({
+          title: "Usuário desativado",
+          description: "O usuário foi desativado com sucesso.",
+        })
+        await loadUsers()
+      } else {
+        toast({
+          title: "Erro ao desativar usuário",
+          description: result.error,
+          variant: "destructive",
+        })
+      }
+      setShowDeleteConfirm(false)
+      setUserToDelete(null)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao desativar o usuário.",
+        variant: "destructive",
+      })
+    }
   }
 
   const filteredUsers = users.filter(
@@ -109,6 +156,14 @@ export default function UserManagement() {
     active: users.filter((u) => u.status === "active").length,
     inactive: users.filter((u) => u.status === "inactive").length,
     admins: users.filter((u) => u.role === "Administrador").length,
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
   }
 
   return (
@@ -197,16 +252,35 @@ export default function UserManagement() {
         <CardContent>
           <div className="space-y-4">
             {filteredUsers.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhum usuário encontrado.</p>
+              <div className="text-center py-12">
+                <Users className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                {searchTerm ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum usuário encontrado</h3>
+                    <p className="text-gray-500 mb-4">
+                      Não encontramos usuários que correspondam à sua busca "{searchTerm}"
+                    </p>
+                    <Button variant="outline" onClick={() => setSearchTerm("")}>
+                      Limpar busca
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum usuário cadastrado</h3>
+                    <p className="text-gray-500 mb-4">Comece adicionando o primeiro usuário à plataforma</p>
+                    <Button onClick={() => setShowUserModal(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Primeiro Usuário
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               filteredUsers.map((user) => (
                 <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={`/placeholder.svg?height=48&width=48&text=${getInitials(user.name)}`} />
+                      <AvatarImage src={`/placeholder-icon.png?height=48&width=48&text=${getInitials(user.name)}`} />
                       <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                     </Avatar>
                     <div>
