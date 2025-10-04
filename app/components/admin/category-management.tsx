@@ -59,7 +59,7 @@ export default function CategoryManagement() {
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [categoryToDelete, setCategoryToDelete] = useState(null)
-  const [viewMode, setViewMode] = useState("grid")
+  const [viewMode, setViewMode] = useState("list")
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -168,20 +168,20 @@ export default function CategoryManagement() {
             <div className="flex items-center gap-2">
               <div className="flex border rounded-lg p-1">
                 <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="h-8 px-3"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className="h-8 px-3"
+                  className="h-8 px-3 rounded-r-none"
                 >
                   <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className="h-8 px-3 rounded-l-none"
+                >
+                  <Grid3X3 className="h-4 w-4" />
                 </Button>
               </div>
               <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>

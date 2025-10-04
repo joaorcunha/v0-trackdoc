@@ -7,9 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Sparkles,
@@ -23,7 +21,6 @@ import {
   Users,
   Building,
   Lightbulb,
-  Clock,
   Send,
   CheckCircle,
   ArrowRight,
@@ -71,33 +68,6 @@ export default function AIDocumentCreator() {
     { value: "short", label: "Curto (1-2 páginas)" },
     { value: "medium", label: "Médio (3-5 páginas)" },
     { value: "long", label: "Longo (6+ páginas)" },
-  ]
-
-  const templates = [
-    {
-      title: "Política de Trabalho Remoto",
-      type: "policy",
-      description: "Diretrizes para trabalho híbrido e remoto",
-      prompt: "Criar uma política de trabalho remoto que inclua diretrizes de produtividade, comunicação e segurança",
-    },
-    {
-      title: "Manual de Onboarding",
-      type: "manual",
-      description: "Guia para integração de novos funcionários",
-      prompt: "Desenvolver um manual completo de onboarding para novos colaboradores",
-    },
-    {
-      title: "Procedimento de Segurança",
-      type: "procedure",
-      description: "Protocolos de segurança no ambiente de trabalho",
-      prompt: "Criar procedimentos de segurança para prevenção de acidentes e emergências",
-    },
-    {
-      title: "Relatório de Performance",
-      type: "report",
-      description: "Template para avaliação de desempenho",
-      prompt: "Gerar um template de relatório para avaliação de performance trimestral",
-    },
   ]
 
   const departments = [
@@ -259,12 +229,6 @@ Este documento será revisado periodicamente para garantir sua relevância e efi
     })
   }
 
-  const applyTemplate = (template) => {
-    setDocumentTitle(template.title)
-    setDocumentType(template.type)
-    setPrompt(template.prompt)
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-3">
@@ -277,206 +241,165 @@ Este documento será revisado periodicamente para garantir sua relevância e efi
         </div>
       </div>
 
-      <Tabs defaultValue="create" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="create">Criar Documento</TabsTrigger>
-          <TabsTrigger value="templates">Templates Rápidos</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Wand2 className="h-5 w-5" />
+                <span>Configuração do Documento</span>
+              </CardTitle>
+              <CardDescription>Configure os parâmetros para gerar seu documento</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Título do Documento</Label>
+                <Input
+                  id="title"
+                  placeholder="Ex: Política de Trabalho Remoto"
+                  value={documentTitle}
+                  onChange={(e) => setDocumentTitle(e.target.value)}
+                />
+              </div>
 
-        <TabsContent value="create" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Wand2 className="h-5 w-5" />
-                  <span>Configuração do Documento</span>
-                </CardTitle>
-                <CardDescription>Configure os parâmetros para gerar seu documento</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título do Documento</Label>
-                  <Input
-                    id="title"
-                    placeholder="Ex: Política de Trabalho Remoto"
-                    value={documentTitle}
-                    onChange={(e) => setDocumentTitle(e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="type">Tipo de Documento</Label>
+                <Select value={documentType} onValueChange={setDocumentType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documentTypes.map((type) => {
+                      const Icon = type.icon
+                      return (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex items-center space-x-2">
+                            <Icon className="h-4 w-4" />
+                            <span>{type.label}</span>
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
 
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="type">Tipo de Documento</Label>
-                  <Select value={documentType} onValueChange={setDocumentType}>
+                  <Label htmlFor="tone">Tom</Label>
+                  <Select value={tone} onValueChange={setTone}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
+                      <SelectValue placeholder="Tom" />
                     </SelectTrigger>
                     <SelectContent>
-                      {documentTypes.map((type) => {
-                        const Icon = type.icon
-                        return (
-                          <SelectItem key={type.value} value={type.value}>
-                            <div className="flex items-center space-x-2">
-                              <Icon className="h-4 w-4" />
-                              <span>{type.label}</span>
-                            </div>
-                          </SelectItem>
-                        )
-                      })}
+                      {toneOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tone">Tom</Label>
-                    <Select value={tone} onValueChange={setTone}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Tom" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {toneOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="length">Extensão</Label>
-                    <Select value={length} onValueChange={setLength}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Tamanho" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {lengthOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="prompt">Descrição e Requisitos</Label>
+                  <Label htmlFor="length">Extensão</Label>
+                  <Select value={length} onValueChange={setLength}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tamanho" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lengthOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="prompt">Descrição e Requisitos</Label>
+                <Textarea
+                  id="prompt"
+                  placeholder="Descreva o que você precisa no documento. Seja específico sobre requisitos, seções necessárias, público-alvo, etc."
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={4}
+                />
+              </div>
+
+              <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
+                {isGenerating ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Gerar Documento
+                  </>
+                )}
+              </Button>
+
+              {isGenerating && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Progresso da geração</span>
+                    <span>{generationProgress}%</span>
+                  </div>
+                  <Progress value={generationProgress} className="w-full" />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5" />
+                  <span>Prévia do Documento</span>
+                </div>
+                {generatedContent && (
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" onClick={handleCopyContent}>
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copiar
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-1" />
+                      Baixar
+                    </Button>
+                    <Button size="sm" onClick={handleSaveDocument}>
+                      <Send className="h-4 w-4 mr-1" />
+                      Salvar e Enviar para Aprovação
+                    </Button>
+                  </div>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {generatedContent ? (
+                <div className="space-y-4">
                   <Textarea
-                    id="prompt"
-                    placeholder="Descreva o que você precisa no documento. Seja específico sobre requisitos, seções necessárias, público-alvo, etc."
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    rows={4}
+                    value={generatedContent}
+                    onChange={(e) => setGeneratedContent(e.target.value)}
+                    rows={20}
+                    className="font-mono text-sm"
                   />
                 </div>
-
-                <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
-                  {isGenerating ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Gerando...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Gerar Documento
-                    </>
-                  )}
-                </Button>
-
-                {isGenerating && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Progresso da geração</span>
-                      <span>{generationProgress}%</span>
-                    </div>
-                    <Progress value={generationProgress} className="w-full" />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-5 w-5" />
-                    <span>Prévia do Documento</span>
-                  </div>
-                  {generatedContent && (
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" onClick={handleCopyContent}>
-                        <Copy className="h-4 w-4 mr-1" />
-                        Copiar
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-1" />
-                        Baixar
-                      </Button>
-                      <Button size="sm" onClick={handleSaveDocument}>
-                        <Send className="h-4 w-4 mr-1" />
-                        Salvar e Enviar para Aprovação
-                      </Button>
-                    </div>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {generatedContent ? (
-                  <div className="space-y-4">
-                    <Textarea
-                      value={generatedContent}
-                      onChange={(e) => setGeneratedContent(e.target.value)}
-                      rows={20}
-                      className="font-mono text-sm"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-96 text-gray-500">
-                    <FileText className="h-16 w-16 mb-4 text-gray-300" />
-                    <p className="text-center">
-                      Configure os parâmetros e clique em "Gerar Documento" para ver a prévia
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="templates" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {templates.map((template, index) => {
-              const TypeIcon = documentTypes.find((t) => t.value === template.type)?.icon || FileText
-              return (
-                <Card
-                  key={index}
-                  className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => applyTemplate(template)}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2 text-lg">
-                      <TypeIcon className="h-5 w-5 text-blue-600" />
-                      <span>{template.title}</span>
-                    </CardTitle>
-                    <CardDescription>{template.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary">{documentTypes.find((t) => t.value === template.type)?.label}</Badge>
-                      <Button variant="outline" size="sm">
-                        <Clock className="h-4 w-4 mr-1" />
-                        Usar Template
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </TabsContent>
-      </Tabs>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-96 text-gray-500">
+                  <FileText className="h-16 w-16 mb-4 text-gray-300" />
+                  <p className="text-center">Configure os parâmetros e clique em "Gerar Documento" para ver a prévia</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       <Dialog open={showMetadataModal} onOpenChange={setShowMetadataModal}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">

@@ -463,7 +463,7 @@ Esta política entra em vigor a partir de ${new Date().toLocaleDateString("pt-BR
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 mt-4 gap-2">
             <div className="flex items-center text-sm text-gray-600">
               <Calendar className="h-4 w-4 mr-2" />
               <span>Criado: {documentHeader.createdDate}</span>
@@ -477,7 +477,7 @@ Esta política entra em vigor a partir de ${new Date().toLocaleDateString("pt-BR
               <span>Última Revisão: {documentHeader.lastRevision}</span>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
             <div className="flex items-center">
               <Badge variant="secondary">{documentHeader.status}</Badge>
             </div>
@@ -489,7 +489,7 @@ Esta política entra em vigor a partir de ${new Date().toLocaleDateString("pt-BR
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Editor de Documentos</CardTitle>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <div className="flex items-center text-sm text-gray-500 space-x-6">
               <Clock className="h-4 w-4" />
               {lastSaved ? `Salvo às ${lastSaved.toLocaleTimeString()}` : "Não salvo"}
             </div>

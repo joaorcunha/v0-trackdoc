@@ -19,6 +19,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { createDocumentType, updateDocumentType, deleteDocumentType } from "@/app/admin/actions"
 import {
@@ -31,8 +34,6 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  SwitchCameraIcon as Switch,
-  TextIcon as Textarea,
   LayoutGrid,
   List,
 } from "lucide-react"
@@ -101,18 +102,17 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
   const [showTypeModal, setShowTypeModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [typeToDelete, setTypeToDelete] = useState<DocumentType | null>(null)
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list")
+  const [isSaving, setIsSaving] = useState(false)
+  const { toast } = useToast()
   const router = useRouter()
 
-  // Atualiza o estado local quando initialDocumentTypes muda (após revalidação do servidor)
   useEffect(() => {
-    // Only update if the arrays are actually different
     if (JSON.stringify(documentTypes) !== JSON.stringify(initialDocumentTypes)) {
       setDocumentTypes(initialDocumentTypes)
     }
   }, [initialDocumentTypes, documentTypes])
 
-  /* --------- DERIVADOS --------- */
   const filteredTypes = documentTypes.filter((type) => type.name?.toLowerCase().includes(searchTerm.toLowerCase()))
 
   const stats = {
@@ -122,22 +122,60 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
     totalDocuments: documentTypes.reduce((sum, t) => sum + (t.documentsCount ?? 0), 0),
   }
 
-  /* --------- HANDLERS --------- */
   const handleSaveDocumentType = async (typeData: Partial<DocumentType>) => {
-    let result
-    if (typeData.id) {
-      result = await updateDocumentType(typeData.id, typeData)
-    } else {
-      result = await createDocumentType(typeData as Omit<DocumentType, "id">)
-    }
+    setIsSaving(true)
+    try {
+      let result
+      if (typeData.id) {
+        result = await updateDocumentType(typeData.id, typeData)
+      } else {
+        result = await createDocumentType(typeData as Omit<DocumentType, "id">)
+      }
 
-    if (result.success) {
-      router.refresh() // Revalida o cache e busca os dados atualizados do servidor
-      setShowTypeModal(false)
-      setSelectedType(null)
-    } else {
-      console.error("Falha ao salvar tipo de documento:", result.error)
-      // TODO: Adicionar feedback de erro para o usuário
+      if (result.success) {
+        toast({
+          title: "Sucesso!",
+          description: typeData.id
+            ? "Tipo de documento atualizado com sucesso."
+            : "Tipo de documento criado com sucesso.",
+        })
+        router.refresh()
+        setShowTypeModal(false)
+        setSelectedType(null)
+      } else {
+        let errorMessage = result.error || "Erro ao salvar tipo de documento"
+
+        // Detecta erro de nome duplicado
+        if (errorMessage.includes("document_types_name_key")) {
+          errorMessage = `O nome "${typeData.name}" já está em uso. Por favor, escolha outro nome.`
+        }
+        // Detecta erro de prefixo duplicado
+        else if (
+          errorMessage.includes("document_types_prefix_key") ||
+          (errorMessage.includes("duplicate key") && errorMessage.includes("prefix"))
+        ) {
+          errorMessage = `O prefixo "${typeData.prefix}" já está em uso. Por favor, escolha outro prefixo.`
+        }
+        // Detecta erro genérico de chave duplicada
+        else if (errorMessage.includes("duplicate key")) {
+          errorMessage = "Já existe um tipo de documento com essas informações. Verifique o nome e o prefixo."
+        }
+
+        toast({
+          title: "Erro ao salvar",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao salvar o tipo de documento. Tente novamente.",
+        variant: "destructive",
+      })
+      console.error("Erro ao salvar tipo de documento:", error)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -146,19 +184,29 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
 
     const result = await deleteDocumentType(typeToDelete.id)
     if (result.success) {
-      router.refresh() // Revalida o cache e busca os dados atualizados do servidor
+      toast({
+        title: "Sucesso!",
+        description: "Tipo de documento excluído com sucesso.",
+      })
+      router.refresh()
       setShowDeleteConfirm(false)
       setTypeToDelete(null)
     } else {
-      console.error("Falha ao deletar tipo de documento:", result.error)
-      // TODO: Adicionar feedback de erro para o usuário
+      toast({
+        title: "Erro ao excluir",
+        description: result.error || "Erro ao excluir tipo de documento",
+        variant: "destructive",
+      })
     }
   }
 
-  /* --------- RENDER --------- */
+  const handleCloseModal = () => {
+    setShowTypeModal(false)
+    setSelectedType(null)
+  }
+
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -201,7 +249,6 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
         </Card>
       </div>
 
-      {/* Actions Bar */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -217,22 +264,22 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center border rounded-lg p-1">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="h-8 w-8 p-0"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
+              <div className="flex border rounded-lg p-1">
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className="h-8 w-8 p-0"
+                  className="h-8 px-3 rounded-r-none"
                 >
                   <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className="h-8 px-3 rounded-l-none"
+                >
+                  <LayoutGrid className="h-4 w-4" />
                 </Button>
               </div>
               <Dialog open={showTypeModal} onOpenChange={setShowTypeModal}>
@@ -246,7 +293,12 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
                   <DialogHeader>
                     <DialogTitle>{selectedType ? "Editar Tipo de Documento" : "Novo Tipo de Documento"}</DialogTitle>
                   </DialogHeader>
-                  <DocumentTypeForm documentType={selectedType} onSave={handleSaveDocumentType} />
+                  <DocumentTypeForm
+                    documentType={selectedType}
+                    onSave={handleSaveDocumentType}
+                    onCancel={() => setShowTypeModal(false)}
+                    isSaving={isSaving}
+                  />
                 </DialogContent>
               </Dialog>
             </div>
@@ -255,7 +307,6 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
       </Card>
 
       {viewMode === "grid" ? (
-        /* Document Types Grid */
         <div className="grid grid-cols-1 lg:col-span-3 xl:grid-cols-3 gap-6">
           {filteredTypes.map((type) => (
             <Card key={type.id}>
@@ -351,7 +402,6 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
           ))}
         </div>
       ) : (
-        /* Document Types List */
         <Card>
           <CardContent className="p-0">
             <div className="space-y-0">
@@ -441,13 +491,14 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
   )
 }
 
-/* ---------- COMPONENTE DE FORMULÁRIO ---------- */
 interface DocumentTypeFormProps {
   documentType: DocumentType | null
   onSave: (data: Partial<DocumentType>) => void
+  onCancel?: () => void
+  isSaving?: boolean
 }
 
-function DocumentTypeForm({ documentType, onSave }: DocumentTypeFormProps) {
+function DocumentTypeForm({ documentType, onSave, onCancel, isSaving = false }: DocumentTypeFormProps) {
   const [formData, setFormData] = useState<Partial<DocumentType>>({
     name: documentType?.name || "",
     description: documentType?.description || "",
@@ -458,7 +509,7 @@ function DocumentTypeForm({ documentType, onSave }: DocumentTypeFormProps) {
     retentionPeriod: documentType?.retentionPeriod || 24,
     status: documentType?.status || "active",
     template: documentType?.template || null,
-    ...(documentType && { id: documentType.id }), // Adiciona o ID se for edição
+    ...(documentType && { id: documentType.id }),
   })
 
   const toggleRequiredField = (fieldKey: string) => {
@@ -572,10 +623,12 @@ function DocumentTypeForm({ documentType, onSave }: DocumentTypeFormProps) {
       </div>
 
       <div className="flex justify-end space-x-2 pt-4 border-t">
-        <Button variant="outline" onClick={() => onSave(formData)}>
+        <Button variant="outline" onClick={onCancel} disabled={isSaving}>
           Cancelar
         </Button>
-        <Button onClick={() => onSave(formData)}>Salvar Tipo</Button>
+        <Button onClick={() => onSave(formData)} disabled={isSaving}>
+          {isSaving ? "Salvando..." : "Salvar Tipo"}
+        </Button>
       </div>
     </div>
   )

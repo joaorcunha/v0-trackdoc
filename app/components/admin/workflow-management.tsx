@@ -106,7 +106,7 @@ export default function WorkflowManagement() {
   const [selectedWorkflowName, setSelectedWorkflowName] = useState("")
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [workflowToDelete, setWorkflowToDelete] = useState(null)
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list")
 
   const filteredWorkflows = workflows.filter((workflow) =>
     (workflow.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
@@ -210,22 +210,22 @@ export default function WorkflowManagement() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center border rounded-lg p-1">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="h-8 w-8 p-0"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
+              <div className="flex border rounded-lg p-1">
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className="h-8 w-8 p-0"
+                  className="h-8 px-3 rounded-r-none"
                 >
                   <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className="h-8 px-3 rounded-l-none"
+                >
+                  <LayoutGrid className="h-4 w-4" />
                 </Button>
               </div>
               <Dialog open={showWorkflowModal} onOpenChange={setShowWorkflowModal}>

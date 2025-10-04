@@ -64,7 +64,7 @@ export default function DepartmentManagement() {
   const [selectedDepartment, setSelectedDepartment] = useState(null)
   const [showDepartmentModal, setShowDepartmentModal] = useState(false)
   const [statusFilter, setStatusFilter] = useState("all")
-  const [viewMode, setViewMode] = useState("grid") // "grid" ou "list"
+  const [viewMode, setViewMode] = useState("list") // "grid" ou "list"
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [departmentToDelete, setDepartmentToDelete] = useState(null)
@@ -195,22 +195,22 @@ export default function DepartmentManagement() {
                   <SelectItem value="inactive">Inativos</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="rounded-r-none"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
+              <div className="flex border rounded-lg p-1">
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className="rounded-l-none"
+                  className="h-8 px-3 rounded-r-none"
                 >
                   <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className="h-8 px-3 rounded-l-none"
+                >
+                  <Grid3X3 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
