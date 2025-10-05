@@ -77,7 +77,6 @@ export default function SignupPage() {
 
       console.log("[v0] Cadastro concluído com sucesso, userId:", result.userId)
 
-      // Success! Redirect to login page
       router.push(`/signup/success?email=${encodeURIComponent(formData.email)}`)
     } catch (err: any) {
       console.error("[v0] Erro no cadastro:", err)

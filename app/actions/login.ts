@@ -10,6 +10,7 @@ interface LoginData {
 interface LoginResult {
   success: boolean
   error?: string
+  emailConfirmed?: boolean
 }
 
 export async function loginUser(data: LoginData): Promise<LoginResult> {
@@ -39,10 +40,20 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
       }
     }
 
+    if (!authData.user.email_confirmed_at) {
+      console.log("[v0] Server: Email não confirmado para:", authData.user.email)
+      return {
+        success: false,
+        error: "Por favor, confirme seu email antes de fazer login. Verifique sua caixa de entrada.",
+        emailConfirmed: false,
+      }
+    }
+
     console.log("[v0] Server: Login realizado com sucesso para:", authData.user.email)
 
     return {
       success: true,
+      emailConfirmed: true,
     }
   } catch (error: any) {
     console.error("[v0] Server: Erro inesperado no login:", error)

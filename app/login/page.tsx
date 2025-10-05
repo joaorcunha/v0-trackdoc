@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,12 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { loginUser } from "@/app/actions/login"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -25,6 +26,18 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+
+  useEffect(() => {
+    const signupSuccess = searchParams.get("signup")
+    const email = searchParams.get("email")
+
+    if (signupSuccess === "success") {
+      setSuccess("Conta criada com sucesso! Faça login para continuar.")
+      if (email) {
+        setFormData((prev) => ({ ...prev, email: decodeURIComponent(email) }))
+      }
+    }
+  }, [])
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -58,6 +71,7 @@ export default function LoginPage() {
 
     setIsLoading(true)
     setError("")
+    setSuccess("")
 
     try {
       console.log("[v0] Tentando fazer login...")
@@ -73,6 +87,8 @@ export default function LoginPage() {
       }
 
       setSuccess("Login realizado com sucesso!")
+
+      localStorage.setItem("isAuthenticated", "true")
 
       // Redirect to dashboard
       setTimeout(() => {
