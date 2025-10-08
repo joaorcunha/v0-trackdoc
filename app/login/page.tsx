@@ -78,6 +78,7 @@ export default function LoginPage() {
 
       const supabase = createClient()
 
+      // Authenticate with Supabase no cliente
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -106,9 +107,12 @@ export default function LoginPage() {
       console.log("[v0] Client: Login realizado com sucesso para:", authData.user.email)
       console.log("[v0] Client: Sessão criada, redirecionando...")
 
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // Setar flag de autenticação no localStorage para o AuthGuard
+      localStorage.setItem("isAuthenticated", "true")
 
-      window.location.href = "/"
+      // Redirecionar para a página principal
+      router.push("/")
+      router.refresh()
     } catch (err: any) {
       console.error("[v0] Client: Erro inesperado no login:", err)
       setError("Erro ao fazer login. Tente novamente.")

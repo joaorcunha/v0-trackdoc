@@ -34,7 +34,8 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ["/login", "/signup"]
   const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
-  if (!user && !isPublicRoute) {
+  // Redirect to login if not authenticated and trying to access protected route
+  if (!user && !isPublicRoute && request.nextUrl.pathname !== "/") {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)
