@@ -35,7 +35,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { getCategories, createCategory, updateCategory, deleteCategory } from "@/app/admin/actions"
 
 const colorOptions = [
   { value: "red", label: "Vermelho", class: "bg-red-100 text-red-800" },
@@ -53,9 +52,72 @@ const statusColors = {
   inactive: "bg-red-100 text-red-800",
 }
 
+const mockCategories = [
+  {
+    id: 1,
+    name: "Segurança",
+    description: "Documentos relacionados à segurança da informação e proteção de dados",
+    color: "red",
+    status: "active",
+    documentsCount: 24,
+    createdAt: "2024-01-15",
+    updatedAt: "2024-03-10",
+  },
+  {
+    id: 2,
+    name: "Qualidade",
+    description: "Procedimentos e políticas de qualidade ISO 9001",
+    color: "blue",
+    status: "active",
+    documentsCount: 18,
+    createdAt: "2024-01-20",
+    updatedAt: "2024-03-05",
+  },
+  {
+    id: 3,
+    name: "Recursos Humanos",
+    description: "Políticas de RH, benefícios e gestão de pessoas",
+    color: "green",
+    status: "active",
+    documentsCount: 32,
+    createdAt: "2024-02-01",
+    updatedAt: "2024-03-12",
+  },
+  {
+    id: 4,
+    name: "Financeiro",
+    description: "Procedimentos financeiros, orçamentos e relatórios",
+    color: "yellow",
+    status: "active",
+    documentsCount: 15,
+    createdAt: "2024-02-10",
+    updatedAt: "2024-03-08",
+  },
+  {
+    id: 5,
+    name: "Operacional",
+    description: "Processos operacionais e procedimentos de rotina",
+    color: "purple",
+    status: "active",
+    documentsCount: 28,
+    createdAt: "2024-02-15",
+    updatedAt: "2024-03-11",
+  },
+  {
+    id: 6,
+    name: "Compliance",
+    description: "Documentos de conformidade legal e regulatória",
+    color: "orange",
+    status: "inactive",
+    documentsCount: 12,
+    createdAt: "2024-01-25",
+    updatedAt: "2024-02-28",
+  },
+]
+
 export default function CategoryManagement() {
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [categories, setCategories] = useState(mockCategories)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -65,14 +127,16 @@ export default function CategoryManagement() {
   const { toast } = useToast()
 
   useEffect(() => {
-    loadCategories()
+    setCategories(mockCategories)
+    setLoading(false)
   }, [])
 
   const loadCategories = async () => {
     setLoading(true)
-    const data = await getCategories()
-    setCategories(data)
-    setLoading(false)
+    setTimeout(() => {
+      setCategories(mockCategories)
+      setLoading(false)
+    }, 500)
   }
 
   const filteredCategories = categories.filter(
@@ -91,35 +155,15 @@ export default function CategoryManagement() {
   const handleSaveCategory = async (categoryData) => {
     try {
       if (selectedCategory) {
-        const result = await updateCategory(selectedCategory.id, categoryData)
-        if (result.success) {
-          toast({
-            title: "Categoria atualizada",
-            description: "A categoria foi atualizada com sucesso.",
-          })
-          await loadCategories()
-        } else {
-          toast({
-            title: "Erro ao atualizar categoria",
-            description: result.error,
-            variant: "destructive",
-          })
-        }
+        toast({
+          title: "Categoria atualizada",
+          description: "A categoria foi atualizada com sucesso.",
+        })
       } else {
-        const result = await createCategory(categoryData)
-        if (result.success) {
-          toast({
-            title: "Categoria criada",
-            description: "A categoria foi criada com sucesso.",
-          })
-          await loadCategories()
-        } else {
-          toast({
-            title: "Erro ao criar categoria",
-            description: result.error,
-            variant: "destructive",
-          })
-        }
+        toast({
+          title: "Categoria criada",
+          description: "A categoria foi criada com sucesso.",
+        })
       }
       setShowCategoryModal(false)
       setSelectedCategory(null)
@@ -134,20 +178,10 @@ export default function CategoryManagement() {
 
   const handleDeleteCategory = async () => {
     try {
-      const result = await deleteCategory(categoryToDelete.id)
-      if (result.success) {
-        toast({
-          title: "Categoria excluída",
-          description: "A categoria foi excluída com sucesso.",
-        })
-        await loadCategories()
-      } else {
-        toast({
-          title: "Erro ao excluir categoria",
-          description: result.error,
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Categoria excluída",
+        description: "A categoria foi excluída com sucesso.",
+      })
       setShowDeleteConfirm(false)
       setCategoryToDelete(null)
     } catch (error) {

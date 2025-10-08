@@ -9,17 +9,130 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Clock, TrendingUp, TrendingDown, AlertTriangle, Users, Download, Timer } from "lucide-react"
 
-const emptyApprovalData = {
+const mockApprovalData = {
   overview: {
-    averageApprovalTime: 0, // dias
-    fastestApproval: 0,
-    slowestApproval: 0,
-    pendingApprovals: 0,
-    overdueApprovals: 0,
+    averageApprovalTime: 3.2,
+    fastestApproval: 0.5,
+    slowestApproval: 12,
+    pendingApprovals: 8,
+    overdueApprovals: 2,
   },
-  approverStats: [],
-  documentTypeStats: [],
-  timeDistribution: [],
+  approverStats: [
+    {
+      id: 1,
+      name: "Maria Santos",
+      role: "Gerente de Qualidade",
+      averageTime: 2.1,
+      totalApprovals: 45,
+      pendingCount: 3,
+      overdueCount: 0,
+      efficiency: 95,
+      trend: "up",
+    },
+    {
+      id: 2,
+      name: "Carlos Oliveira",
+      role: "Diretor de Operações",
+      averageTime: 3.5,
+      totalApprovals: 38,
+      pendingCount: 2,
+      overdueCount: 1,
+      efficiency: 88,
+      trend: "stable",
+    },
+    {
+      id: 3,
+      name: "Ana Costa",
+      role: "Coordenadora de TI",
+      averageTime: 2.8,
+      totalApprovals: 52,
+      pendingCount: 1,
+      overdueCount: 0,
+      efficiency: 92,
+      trend: "up",
+    },
+    {
+      id: 4,
+      name: "Roberto Silva",
+      role: "Gerente Financeiro",
+      averageTime: 4.2,
+      totalApprovals: 29,
+      pendingCount: 2,
+      overdueCount: 1,
+      efficiency: 82,
+      trend: "down",
+    },
+    {
+      id: 5,
+      name: "Fernanda Costa",
+      role: "Diretora de RH",
+      averageTime: 3.1,
+      totalApprovals: 41,
+      pendingCount: 0,
+      overdueCount: 0,
+      efficiency: 90,
+      trend: "up",
+    },
+  ],
+  documentTypeStats: [
+    {
+      type: "Política",
+      avgTime: 4.5,
+      count: 23,
+      slaCompliance: 87,
+    },
+    {
+      type: "Procedimento",
+      avgTime: 2.8,
+      count: 45,
+      slaCompliance: 94,
+    },
+    {
+      type: "Manual",
+      avgTime: 3.2,
+      count: 18,
+      slaCompliance: 91,
+    },
+    {
+      type: "Relatório",
+      avgTime: 2.1,
+      count: 67,
+      slaCompliance: 96,
+    },
+    {
+      type: "Ata",
+      avgTime: 1.5,
+      count: 34,
+      slaCompliance: 98,
+    },
+  ],
+  timeDistribution: [
+    {
+      range: "0-1 dia",
+      count: 45,
+      percentage: 24,
+    },
+    {
+      range: "1-3 dias",
+      count: 78,
+      percentage: 42,
+    },
+    {
+      range: "3-5 dias",
+      count: 42,
+      percentage: 22,
+    },
+    {
+      range: "5-7 dias",
+      count: 15,
+      percentage: 8,
+    },
+    {
+      range: "7+ dias",
+      count: 7,
+      percentage: 4,
+    },
+  ],
 }
 
 const trendIcons = {
@@ -32,7 +145,7 @@ export default function ApprovalTimeReport() {
   const [selectedPeriod, setSelectedPeriod] = useState("month")
   const [selectedType, setSelectedType] = useState("all")
 
-  const approvalData = emptyApprovalData // Use empty data
+  const approvalData = mockApprovalData // Use mock data
 
   return (
     <div className="space-y-6">

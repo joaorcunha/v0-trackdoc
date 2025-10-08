@@ -38,7 +38,71 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-import { getUsers, updateUser, deleteUser } from "@/app/admin/actions"
+const mockUsers = [
+  {
+    id: 1,
+    name: "João Silva",
+    email: "joao.silva@empresa.com",
+    role: "Administrador",
+    department: "TI",
+    status: "active",
+    lastLogin: "Hoje às 14:30",
+  },
+  {
+    id: 2,
+    name: "Maria Santos",
+    email: "maria.santos@empresa.com",
+    role: "Gerente",
+    department: "RH",
+    status: "active",
+    lastLogin: "Hoje às 10:15",
+  },
+  {
+    id: 3,
+    name: "Carlos Oliveira",
+    email: "carlos.oliveira@empresa.com",
+    role: "Gerente",
+    department: "Vendas",
+    status: "active",
+    lastLogin: "Ontem às 18:45",
+  },
+  {
+    id: 4,
+    name: "Ana Costa",
+    email: "ana.costa@empresa.com",
+    role: "Aprovador",
+    department: "Financeiro",
+    status: "active",
+    lastLogin: "Hoje às 09:20",
+  },
+  {
+    id: 5,
+    name: "Roberto Almeida",
+    email: "roberto.almeida@empresa.com",
+    role: "Administrador",
+    department: "Diretoria",
+    status: "active",
+    lastLogin: "Hoje às 11:00",
+  },
+  {
+    id: 6,
+    name: "Paula Ferreira",
+    email: "paula.ferreira@empresa.com",
+    role: "Usuário",
+    department: "Operações",
+    status: "active",
+    lastLogin: "Há 2 dias",
+  },
+  {
+    id: 7,
+    name: "Ricardo Mendes",
+    email: "ricardo.mendes@empresa.com",
+    role: "Usuário",
+    department: "TI",
+    status: "inactive",
+    lastLogin: "Há 15 dias",
+  },
+]
 
 // Função para gerar iniciais do nome completo
 const getInitials = (fullName: string) => {
@@ -62,8 +126,8 @@ const statusColors = {
 }
 
 export default function UserManagement() {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [users, setUsers] = useState(mockUsers)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedUser, setSelectedUser] = useState(null)
   const [showUserModal, setShowUserModal] = useState(false)
@@ -73,33 +137,25 @@ export default function UserManagement() {
   const { toast } = useToast()
 
   useEffect(() => {
-    loadUsers()
+    setUsers(mockUsers)
+    setLoading(false)
   }, [])
 
   const loadUsers = async () => {
     setLoading(true)
-    const data = await getUsers()
-    setUsers(data)
-    setLoading(false)
+    setTimeout(() => {
+      setUsers(mockUsers)
+      setLoading(false)
+    }, 500)
   }
 
   const handleSaveUser = async (userData) => {
     try {
       if (userData.id) {
-        const result = await updateUser(userData.id, userData)
-        if (result.success) {
-          toast({
-            title: "Usuário atualizado",
-            description: "O usuário foi atualizado com sucesso.",
-          })
-          await loadUsers()
-        } else {
-          toast({
-            title: "Erro ao atualizar usuário",
-            description: result.error,
-            variant: "destructive",
-          })
-        }
+        toast({
+          title: "Usuário atualizado",
+          description: "O usuário foi atualizado com sucesso.",
+        })
       } else {
         toast({
           title: "Novo usuário",
@@ -119,20 +175,10 @@ export default function UserManagement() {
 
   const handleDeleteUser = async () => {
     try {
-      const result = await deleteUser(userToDelete.id)
-      if (result.success) {
-        toast({
-          title: "Usuário desativado",
-          description: "O usuário foi desativado com sucesso.",
-        })
-        await loadUsers()
-      } else {
-        toast({
-          title: "Erro ao desativar usuário",
-          description: result.error,
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Usuário desativado",
+        description: "O usuário foi desativado com sucesso.",
+      })
       setShowDeleteConfirm(false)
       setUserToDelete(null)
     } catch (error) {

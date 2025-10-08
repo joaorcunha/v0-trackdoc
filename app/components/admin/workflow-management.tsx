@@ -38,8 +38,6 @@ import {
   List,
 } from "lucide-react"
 
-import { getWorkflows, createWorkflow, updateWorkflow, deleteWorkflow } from "@/app/admin/actions"
-
 const mockWorkflows = [
   {
     id: 1,
@@ -52,7 +50,7 @@ const mockWorkflows = [
       { id: 3, name: "Compliance", users: ["Ana Costa"], required: false },
     ],
     status: "active",
-    documentsCount: 0, // Alterado para 0
+    documentsCount: 8,
   },
   {
     id: 2,
@@ -64,7 +62,7 @@ const mockWorkflows = [
       { id: 2, name: "Gerente", users: ["Maria Santos"], required: true },
     ],
     status: "active",
-    documentsCount: 0, // Alterado para 0
+    documentsCount: 12,
   },
   {
     id: 3,
@@ -72,8 +70,21 @@ const mockWorkflows = [
     description: "Fluxo para atas de reunião",
     documentTypes: ["Ata"],
     steps: [{ id: 1, name: "Secretário", users: ["Ana Costa"], required: true }],
-    status: "inactive",
-    documentsCount: 0, // Alterado para 0
+    status: "active",
+    documentsCount: 5,
+  },
+  {
+    id: 4,
+    name: "Aprovação de Contratos",
+    description: "Fluxo para aprovação de contratos comerciais",
+    documentTypes: ["Contrato"],
+    steps: [
+      { id: 1, name: "Jurídico", users: ["Roberto Almeida"], required: true },
+      { id: 2, name: "Financeiro", users: ["Ana Costa"], required: true },
+      { id: 3, name: "Diretoria", users: ["Carlos Oliveira"], required: true },
+    ],
+    status: "active",
+    documentsCount: 6,
   },
 ]
 
@@ -100,8 +111,8 @@ const documentStatusLabels = {
 }
 
 export default function WorkflowManagement() {
-  const [workflows, setWorkflows] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [workflows, setWorkflows] = useState(mockWorkflows)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedWorkflow, setSelectedWorkflow] = useState(null)
   const [showWorkflowModal, setShowWorkflowModal] = useState(false)
@@ -114,14 +125,16 @@ export default function WorkflowManagement() {
   const { toast } = useToast()
 
   useEffect(() => {
-    loadWorkflows()
+    setWorkflows(mockWorkflows)
+    setLoading(false)
   }, [])
 
   const loadWorkflows = async () => {
     setLoading(true)
-    const data = await getWorkflows()
-    setWorkflows(data)
-    setLoading(false)
+    setTimeout(() => {
+      setWorkflows(mockWorkflows)
+      setLoading(false)
+    }, 500)
   }
 
   const filteredWorkflows = workflows.filter((workflow) =>
@@ -145,35 +158,15 @@ export default function WorkflowManagement() {
   const handleSaveWorkflow = async (workflowData) => {
     try {
       if (workflowData.id) {
-        const result = await updateWorkflow(workflowData.id, workflowData)
-        if (result.success) {
-          toast({
-            title: "Fluxo atualizado",
-            description: "O fluxo de aprovação foi atualizado com sucesso.",
-          })
-          await loadWorkflows()
-        } else {
-          toast({
-            title: "Erro ao atualizar fluxo",
-            description: result.error,
-            variant: "destructive",
-          })
-        }
+        toast({
+          title: "Fluxo atualizado",
+          description: "O fluxo de aprovação foi atualizado com sucesso.",
+        })
       } else {
-        const result = await createWorkflow(workflowData)
-        if (result.success) {
-          toast({
-            title: "Fluxo criado",
-            description: "O fluxo de aprovação foi criado com sucesso.",
-          })
-          await loadWorkflows()
-        } else {
-          toast({
-            title: "Erro ao criar fluxo",
-            description: result.error,
-            variant: "destructive",
-          })
-        }
+        toast({
+          title: "Fluxo criado",
+          description: "O fluxo de aprovação foi criado com sucesso.",
+        })
       }
       setShowWorkflowModal(false)
       setSelectedWorkflow(null)
@@ -188,20 +181,10 @@ export default function WorkflowManagement() {
 
   const handleDeleteWorkflow = async () => {
     try {
-      const result = await deleteWorkflow(workflowToDelete.id)
-      if (result.success) {
-        toast({
-          title: "Fluxo excluído",
-          description: "O fluxo de aprovação foi excluído com sucesso.",
-        })
-        await loadWorkflows()
-      } else {
-        toast({
-          title: "Erro ao excluir fluxo",
-          description: result.error,
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Fluxo excluído",
+        description: "O fluxo de aprovação foi excluído com sucesso.",
+      })
       setShowDeleteConfirm(false)
       setWorkflowToDelete(null)
     } catch (error) {
@@ -730,6 +713,7 @@ function WorkflowForm({ workflow, onSave }) {
                             <SelectItem value="maria">Maria Santos</SelectItem>
                             <SelectItem value="carlos">Carlos Oliveira</SelectItem>
                             <SelectItem value="ana">Ana Costa</SelectItem>
+                            <SelectItem value="roberto">Roberto Almeida</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

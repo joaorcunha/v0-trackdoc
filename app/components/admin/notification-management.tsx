@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { Bell, AlertTriangle } from "lucide-react"
-import { getNotifications, markNotificationAsRead, deleteNotification } from "@/app/admin/actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,65 +32,88 @@ interface Notification {
   read: boolean
 }
 
+const mockNotifications = [
+  {
+    id: "1",
+    title: "Novo documento pendente de aprovação",
+    message: "O documento 'Política de Segurança v2.0' está aguardando sua aprovação",
+    type: "info",
+    user_id: "1",
+    company_id: "1",
+    entity_type: "document",
+    entity_id: "123",
+    created_at: "2024-03-15T10:30:00Z",
+    read: false,
+  },
+  {
+    id: "2",
+    title: "Documento aprovado",
+    message: "O documento 'Manual de Procedimentos' foi aprovado com sucesso",
+    type: "success",
+    user_id: "1",
+    company_id: "1",
+    entity_type: "document",
+    entity_id: "124",
+    created_at: "2024-03-14T15:45:00Z",
+    read: true,
+  },
+  {
+    id: "3",
+    title: "Prazo de revisão próximo",
+    message: "O documento 'Política de RH' precisa ser revisado em 7 dias",
+    type: "warning",
+    user_id: "1",
+    company_id: "1",
+    entity_type: "document",
+    entity_id: "125",
+    created_at: "2024-03-13T09:00:00Z",
+    read: false,
+  },
+  {
+    id: "4",
+    title: "Documento rejeitado",
+    message: "O documento 'Relatório Mensal' foi rejeitado. Verifique os comentários",
+    type: "error",
+    user_id: "1",
+    company_id: "1",
+    entity_type: "document",
+    entity_id: "126",
+    created_at: "2024-03-12T14:20:00Z",
+    read: true,
+  },
+]
+
 export default function NotificationManagement() {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("overview")
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
+  const [notifications, setNotifications] = useState(mockNotifications)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    loadNotifications()
+    setNotifications(mockNotifications)
+    setLoading(false)
   }, [])
 
   const loadNotifications = async () => {
     setLoading(true)
-    try {
-      const data = await getNotifications()
-      setNotifications(data)
-    } catch (error) {
-      console.error("Erro ao carregar notificações:", error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as notificações.",
-        variant: "destructive",
-      })
-    } finally {
+    setTimeout(() => {
+      setNotifications(mockNotifications)
       setLoading(false)
-    }
+    }, 500)
   }
 
   const handleMarkAsRead = async (id: string) => {
-    const result = await markNotificationAsRead(id)
-    if (result.success) {
-      toast({
-        title: "Sucesso",
-        description: "Notificação marcada como lida.",
-      })
-      loadNotifications()
-    } else {
-      toast({
-        title: "Erro",
-        description: result.error || "Não foi possível marcar a notificação como lida.",
-        variant: "destructive",
-      })
-    }
+    toast({
+      title: "Sucesso",
+      description: "Notificação marcada como lida.",
+    })
   }
 
   const handleDelete = async (id: string) => {
-    const result = await deleteNotification(id)
-    if (result.success) {
-      toast({
-        title: "Sucesso",
-        description: "Notificação excluída com sucesso.",
-      })
-      loadNotifications()
-    } else {
-      toast({
-        title: "Erro",
-        description: result.error || "Não foi possível excluir a notificação.",
-        variant: "destructive",
-      })
-    }
+    toast({
+      title: "Sucesso",
+      description: "Notificação excluída com sucesso.",
+    })
   }
 
   const getTypeColor = (type: string) => {

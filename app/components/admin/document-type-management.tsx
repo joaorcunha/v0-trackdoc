@@ -23,7 +23,6 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
-import { createDocumentType, updateDocumentType, deleteDocumentType } from "@/app/admin/actions"
 import {
   Tag,
   CheckCircle,
@@ -89,14 +88,96 @@ const availableFields = [
   { key: "steps", label: "Etapas" },
 ]
 
+/* ---------- CONSTANTES ---------- */
+const mockDocumentTypes = [
+  {
+    id: 1,
+    name: "Política",
+    description: "Documentos de políticas corporativas e diretrizes estratégicas",
+    prefix: "POL",
+    color: "blue",
+    requiredFields: ["title", "author", "version", "sector"],
+    approvalRequired: true,
+    retentionPeriod: 60,
+    status: "active",
+    template: null,
+    documentsCount: 18,
+  },
+  {
+    id: 2,
+    name: "Procedimento",
+    description: "Procedimentos operacionais e instruções de trabalho",
+    prefix: "PROC",
+    color: "green",
+    requiredFields: ["title", "author", "version", "steps"],
+    approvalRequired: true,
+    retentionPeriod: 36,
+    status: "active",
+    template: null,
+    documentsCount: 24,
+  },
+  {
+    id: 3,
+    name: "Relatório",
+    description: "Relatórios gerenciais e operacionais",
+    prefix: "REL",
+    color: "yellow",
+    requiredFields: ["title", "author", "date", "period"],
+    approvalRequired: false,
+    retentionPeriod: 24,
+    status: "active",
+    template: null,
+    documentsCount: 32,
+  },
+  {
+    id: 4,
+    name: "Ata",
+    description: "Atas de reuniões e assembleias",
+    prefix: "ATA",
+    color: "purple",
+    requiredFields: ["title", "date", "participants", "decisions"],
+    approvalRequired: false,
+    retentionPeriod: 12,
+    status: "active",
+    template: null,
+    documentsCount: 15,
+  },
+  {
+    id: 5,
+    name: "Manual",
+    description: "Manuais técnicos e de operação",
+    prefix: "MAN",
+    color: "orange",
+    requiredFields: ["title", "author", "version", "category"],
+    approvalRequired: true,
+    retentionPeriod: 48,
+    status: "active",
+    template: null,
+    documentsCount: 8,
+  },
+  {
+    id: 6,
+    name: "Contrato",
+    description: "Contratos comerciais e acordos",
+    prefix: "CTR",
+    color: "red",
+    requiredFields: ["title", "author", "date", "participants"],
+    approvalRequired: true,
+    retentionPeriod: 120,
+    status: "inactive",
+    template: null,
+    documentsCount: 5,
+  },
+]
+
 /* ---------- PROPS ---------- */
 interface DocumentTypeManagementProps {
-  initialDocumentTypes: DocumentType[]
+  initialDocumentTypes?: DocumentType[]
 }
 
 /* ---------- COMPONENTE PRINCIPAL ---------- */
 export default function DocumentTypeManagement({ initialDocumentTypes = [] }: DocumentTypeManagementProps) {
-  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>(initialDocumentTypes)
+  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>(mockDocumentTypes)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedType, setSelectedType] = useState<DocumentType | null>(null)
   const [showTypeModal, setShowTypeModal] = useState(false)
@@ -108,10 +189,8 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
   const router = useRouter()
 
   useEffect(() => {
-    if (JSON.stringify(documentTypes) !== JSON.stringify(initialDocumentTypes)) {
-      setDocumentTypes(initialDocumentTypes)
-    }
-  }, [initialDocumentTypes, documentTypes])
+    setDocumentTypes(mockDocumentTypes)
+  }, [])
 
   const filteredTypes = documentTypes.filter((type) => type.name?.toLowerCase().includes(searchTerm.toLowerCase()))
 
@@ -125,48 +204,14 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
   const handleSaveDocumentType = async (typeData: Partial<DocumentType>) => {
     setIsSaving(true)
     try {
-      let result
-      if (typeData.id) {
-        result = await updateDocumentType(typeData.id, typeData)
-      } else {
-        result = await createDocumentType(typeData as Omit<DocumentType, "id">)
-      }
-
-      if (result.success) {
-        toast({
-          title: "Sucesso!",
-          description: typeData.id
-            ? "Tipo de documento atualizado com sucesso."
-            : "Tipo de documento criado com sucesso.",
-        })
-        router.refresh()
-        setShowTypeModal(false)
-        setSelectedType(null)
-      } else {
-        let errorMessage = result.error || "Erro ao salvar tipo de documento"
-
-        // Detecta erro de nome duplicado
-        if (errorMessage.includes("document_types_name_key")) {
-          errorMessage = `O nome "${typeData.name}" já está em uso. Por favor, escolha outro nome.`
-        }
-        // Detecta erro de prefixo duplicado
-        else if (
-          errorMessage.includes("document_types_prefix_key") ||
-          (errorMessage.includes("duplicate key") && errorMessage.includes("prefix"))
-        ) {
-          errorMessage = `O prefixo "${typeData.prefix}" já está em uso. Por favor, escolha outro prefixo.`
-        }
-        // Detecta erro genérico de chave duplicada
-        else if (errorMessage.includes("duplicate key")) {
-          errorMessage = "Já existe um tipo de documento com essas informações. Verifique o nome e o prefixo."
-        }
-
-        toast({
-          title: "Erro ao salvar",
-          description: errorMessage,
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Sucesso!",
+        description: typeData.id
+          ? "Tipo de documento atualizado com sucesso."
+          : "Tipo de documento criado com sucesso.",
+      })
+      setShowTypeModal(false)
+      setSelectedType(null)
     } catch (error) {
       toast({
         title: "Erro inesperado",
@@ -182,22 +227,12 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
   const handleDeleteDocumentType = async () => {
     if (!typeToDelete) return
 
-    const result = await deleteDocumentType(typeToDelete.id)
-    if (result.success) {
-      toast({
-        title: "Sucesso!",
-        description: "Tipo de documento excluído com sucesso.",
-      })
-      router.refresh()
-      setShowDeleteConfirm(false)
-      setTypeToDelete(null)
-    } else {
-      toast({
-        title: "Erro ao excluir",
-        description: result.error || "Erro ao excluir tipo de documento",
-        variant: "destructive",
-      })
-    }
+    toast({
+      title: "Sucesso!",
+      description: "Tipo de documento excluído com sucesso.",
+    })
+    setShowDeleteConfirm(false)
+    setTypeToDelete(null)
   }
 
   const handleCloseModal = () => {

@@ -21,7 +21,176 @@ import {
   Shield,
 } from "lucide-react"
 
-const emptyAuditData: any[] = [] // Empty array for audit logs
+const mockAuditData = [
+  {
+    id: 1,
+    action: "document_created",
+    user: "João Silva",
+    details: "Criou o documento 'Manual de Procedimentos Operacionais'",
+    document: "DOC-2024-001",
+    documentTitle: "Manual de Procedimentos Operacionais",
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    severity: "info",
+    ipAddress: "192.168.1.45",
+    userAgent: "Chrome 120.0",
+  },
+  {
+    id: 2,
+    action: "document_approved",
+    user: "Maria Santos",
+    details: "Aprovou o documento 'Política de Segurança da Informação'",
+    document: "DOC-2024-015",
+    documentTitle: "Política de Segurança da Informação",
+    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    severity: "success",
+    ipAddress: "192.168.1.67",
+    userAgent: "Firefox 121.0",
+  },
+  {
+    id: 3,
+    action: "login_failed",
+    user: "carlos.oliveira@empresa.com",
+    details: "Tentativa de login falhou - senha incorreta",
+    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+    severity: "warning",
+    ipAddress: "192.168.1.89",
+    userAgent: "Safari 17.2",
+  },
+  {
+    id: 4,
+    action: "document_viewed",
+    user: "Ana Costa",
+    details: "Visualizou o documento 'Relatório Financeiro Q4 2023'",
+    document: "DOC-2024-008",
+    documentTitle: "Relatório Financeiro Q4 2023",
+    timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+    severity: "info",
+    ipAddress: "192.168.1.23",
+    userAgent: "Chrome 120.0",
+  },
+  {
+    id: 5,
+    action: "document_deleted",
+    user: "Pedro Lima",
+    details: "Excluiu o documento 'Rascunho - Política Antiga'",
+    document: "DOC-2023-089",
+    documentTitle: "Rascunho - Política Antiga",
+    timestamp: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(),
+    severity: "critical",
+    ipAddress: "192.168.1.56",
+    userAgent: "Edge 120.0",
+  },
+  {
+    id: 6,
+    action: "user_permissions_changed",
+    user: "Roberto Silva",
+    details: "Alterou permissões do usuário 'Lucia Ferreira' para Administrador",
+    timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+    severity: "warning",
+    ipAddress: "192.168.1.12",
+    userAgent: "Chrome 120.0",
+  },
+  {
+    id: 7,
+    action: "document_edited",
+    user: "Fernanda Costa",
+    details: "Editou o documento 'Guia de Integração de Novos Funcionários'",
+    document: "DOC-2024-022",
+    documentTitle: "Guia de Integração de Novos Funcionários",
+    timestamp: new Date(Date.now() - 14 * 60 * 60 * 1000).toISOString(),
+    severity: "info",
+    ipAddress: "192.168.1.78",
+    userAgent: "Chrome 120.0",
+  },
+  {
+    id: 8,
+    action: "document_rejected",
+    user: "Marcos Oliveira",
+    details: "Rejeitou o documento 'Proposta de Orçamento 2024' - necessita revisão",
+    document: "DOC-2024-034",
+    documentTitle: "Proposta de Orçamento 2024",
+    timestamp: new Date(Date.now() - 16 * 60 * 60 * 1000).toISOString(),
+    severity: "warning",
+    ipAddress: "192.168.1.34",
+    userAgent: "Firefox 121.0",
+  },
+  {
+    id: 9,
+    action: "login_success",
+    user: "Sandra Lima",
+    details: "Login realizado com sucesso",
+    timestamp: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+    severity: "success",
+    ipAddress: "192.168.1.90",
+    userAgent: "Chrome 120.0",
+  },
+  {
+    id: 10,
+    action: "document_created",
+    user: "Paulo Santos",
+    details: "Criou o documento 'Procedimentos de Qualidade ISO 9001'",
+    document: "DOC-2024-011",
+    documentTitle: "Procedimentos de Qualidade ISO 9001",
+    timestamp: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
+    severity: "info",
+    ipAddress: "192.168.1.45",
+    userAgent: "Safari 17.2",
+  },
+  {
+    id: 11,
+    action: "system_backup",
+    user: "Sistema",
+    details: "Backup automático do sistema realizado com sucesso",
+    timestamp: new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString(),
+    severity: "success",
+    ipAddress: "127.0.0.1",
+    userAgent: "System",
+  },
+  {
+    id: 12,
+    action: "document_approved",
+    user: "Carla Mendes",
+    details: "Aprovou o documento 'Manual de Procedimentos Operacionais'",
+    document: "DOC-2024-001",
+    documentTitle: "Manual de Procedimentos Operacionais",
+    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    severity: "success",
+    ipAddress: "192.168.1.56",
+    userAgent: "Chrome 120.0",
+  },
+  {
+    id: 13,
+    action: "user_created",
+    user: "Roberto Silva",
+    details: "Criou novo usuário 'Beatriz Silva' no departamento de Qualidade",
+    timestamp: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
+    severity: "info",
+    ipAddress: "192.168.1.12",
+    userAgent: "Chrome 120.0",
+  },
+  {
+    id: 14,
+    action: "document_viewed",
+    user: "Juliana Rocha",
+    details: "Visualizou o documento 'Política de Segurança da Informação'",
+    document: "DOC-2024-015",
+    documentTitle: "Política de Segurança da Informação",
+    timestamp: new Date(Date.now() - 28 * 60 * 60 * 1000).toISOString(),
+    severity: "info",
+    ipAddress: "192.168.1.67",
+    userAgent: "Firefox 121.0",
+  },
+  {
+    id: 15,
+    action: "login_failed",
+    user: "ricardo.alves@empresa.com",
+    details: "Tentativa de login falhou - conta bloqueada após múltiplas tentativas",
+    timestamp: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(),
+    severity: "critical",
+    ipAddress: "192.168.1.99",
+    userAgent: "Chrome 120.0",
+  },
+]
 
 const actionLabels = {
   document_created: "Documento Criado",
@@ -66,7 +235,7 @@ const severityLabels = {
 }
 
 export default function AuditReport() {
-  const [auditLogs, setAuditLogs] = useState(emptyAuditData) // Initialize with empty data
+  const [auditLogs, setAuditLogs] = useState(mockAuditData) // Initialize with mock data
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedAction, setSelectedAction] = useState("all")
   const [selectedSeverity, setSelectedSeverity] = useState("all")
@@ -190,11 +359,19 @@ export default function AuditReport() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Usuários</SelectItem>
-                  {/* Dynamically populate users if needed from actual data */}
                   <SelectItem value="João Silva">João Silva</SelectItem>
                   <SelectItem value="Maria Santos">Maria Santos</SelectItem>
                   <SelectItem value="Carlos Oliveira">Carlos Oliveira</SelectItem>
                   <SelectItem value="Ana Costa">Ana Costa</SelectItem>
+                  <SelectItem value="Pedro Lima">Pedro Lima</SelectItem>
+                  <SelectItem value="Roberto Silva">Roberto Silva</SelectItem>
+                  <SelectItem value="Fernanda Costa">Fernanda Costa</SelectItem>
+                  <SelectItem value="Marcos Oliveira">Marcos Oliveira</SelectItem>
+                  <SelectItem value="Sandra Lima">Sandra Lima</SelectItem>
+                  <SelectItem value="Paulo Santos">Paulo Santos</SelectItem>
+                  <SelectItem value="Carla Mendes">Carla Mendes</SelectItem>
+                  <SelectItem value="Juliana Rocha">Juliana Rocha</SelectItem>
+                  <SelectItem value="ricardo.alves@empresa.com">ricardo.alves@empresa.com</SelectItem>
                 </SelectContent>
               </Select>
 

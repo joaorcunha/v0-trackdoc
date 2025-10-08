@@ -9,17 +9,166 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { TrendingUp, TrendingDown, FileText, Clock, Users, Download, BarChart3 } from "lucide-react"
 
-const emptyProductivityData = {
+const mockProductivityData = {
   overview: {
-    totalDocuments: 0,
-    documentsThisMonth: 0,
-    averageCreationTime: 0, // dias
-    mostProductiveUser: "Nenhum",
-    mostProductiveDepartment: "Nenhum",
+    totalDocuments: 187,
+    documentsThisMonth: 34,
+    averageCreationTime: 2.8,
+    mostProductiveUser: "João Silva",
+    mostProductiveDepartment: "TI",
   },
-  userStats: [],
-  departmentStats: [],
-  monthlyTrend: [],
+  userStats: [
+    {
+      id: 1,
+      name: "João Silva",
+      department: "TI",
+      documentsCreated: 28,
+      documentsApproved: 25,
+      averageTime: 2.1,
+      efficiency: 95,
+      trend: "up",
+    },
+    {
+      id: 2,
+      name: "Maria Santos",
+      department: "Qualidade",
+      documentsCreated: 24,
+      documentsApproved: 22,
+      averageTime: 2.5,
+      efficiency: 92,
+      trend: "up",
+    },
+    {
+      id: 3,
+      name: "Carlos Oliveira",
+      department: "Operações",
+      documentsCreated: 22,
+      documentsApproved: 18,
+      averageTime: 3.2,
+      efficiency: 85,
+      trend: "stable",
+    },
+    {
+      id: 4,
+      name: "Ana Costa",
+      department: "TI",
+      documentsCreated: 19,
+      documentsApproved: 17,
+      averageTime: 2.8,
+      efficiency: 88,
+      trend: "up",
+    },
+    {
+      id: 5,
+      name: "Pedro Lima",
+      department: "Segurança",
+      documentsCreated: 16,
+      documentsApproved: 14,
+      averageTime: 3.5,
+      efficiency: 82,
+      trend: "down",
+    },
+    {
+      id: 6,
+      name: "Lucia Ferreira",
+      department: "RH",
+      documentsCreated: 15,
+      documentsApproved: 13,
+      averageTime: 3.1,
+      efficiency: 86,
+      trend: "stable",
+    },
+    {
+      id: 7,
+      name: "Roberto Silva",
+      department: "Financeiro",
+      documentsCreated: 14,
+      documentsApproved: 12,
+      averageTime: 3.8,
+      efficiency: 80,
+      trend: "down",
+    },
+    {
+      id: 8,
+      name: "Fernanda Costa",
+      department: "Diretoria",
+      documentsCreated: 12,
+      documentsApproved: 11,
+      averageTime: 2.9,
+      efficiency: 90,
+      trend: "up",
+    },
+  ],
+  departmentStats: [
+    {
+      name: "TI",
+      documents: 47,
+      efficiency: 92,
+      growth: 15,
+    },
+    {
+      name: "Qualidade",
+      documents: 38,
+      efficiency: 89,
+      growth: 12,
+    },
+    {
+      name: "Operações",
+      documents: 35,
+      efficiency: 85,
+      growth: 8,
+    },
+    {
+      name: "RH",
+      documents: 28,
+      efficiency: 87,
+      growth: 10,
+    },
+    {
+      name: "Financeiro",
+      documents: 22,
+      efficiency: 82,
+      growth: -5,
+    },
+    {
+      name: "Segurança",
+      documents: 17,
+      efficiency: 84,
+      growth: 3,
+    },
+  ],
+  monthlyTrend: [
+    {
+      month: "Jan",
+      documents: 28,
+      approvals: 25,
+    },
+    {
+      month: "Fev",
+      documents: 32,
+      approvals: 29,
+    },
+    {
+      month: "Mar",
+      documents: 35,
+      approvals: 31,
+    },
+    {
+      month: "Abr",
+      documents: 31,
+      approvals: 28,
+    },
+    {
+      month: "Mai",
+      documents: 29,
+      approvals: 26,
+    },
+    {
+      month: "Jun",
+      documents: 34,
+      approvals: 30,
+    },
+  ],
 }
 
 const trendIcons = {
@@ -32,7 +181,7 @@ export default function ProductivityReport() {
   const [selectedPeriod, setSelectedPeriod] = useState("month")
   const [selectedDepartment, setSelectedDepartment] = useState("all")
 
-  const productivityData = emptyProductivityData // Use empty data
+  const productivityData = mockProductivityData // Usando dados mockados em vez de dados vazios
 
   return (
     <div className="space-y-6">

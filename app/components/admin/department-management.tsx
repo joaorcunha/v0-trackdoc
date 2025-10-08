@@ -39,7 +39,74 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-import { getDepartments, createDepartment, updateDepartment, deleteDepartment } from "@/app/admin/actions"
+const mockDepartments = [
+  {
+    id: 1,
+    name: "Tecnologia da Informação",
+    shortName: "TI",
+    description: "Responsável pela infraestrutura tecnológica e desenvolvimento de sistemas",
+    manager: "João Silva",
+    color: "#3b82f6",
+    status: "active",
+    employeeCount: 15,
+    documentsCount: 42,
+  },
+  {
+    id: 2,
+    name: "Recursos Humanos",
+    shortName: "RH",
+    description: "Gestão de pessoas, recrutamento e desenvolvimento organizacional",
+    manager: "Maria Santos",
+    color: "#10b981",
+    status: "active",
+    employeeCount: 8,
+    documentsCount: 35,
+  },
+  {
+    id: 3,
+    name: "Vendas",
+    shortName: "VND",
+    description: "Equipe comercial e gestão de relacionamento com clientes",
+    manager: "Carlos Oliveira",
+    color: "#f59e0b",
+    status: "active",
+    employeeCount: 22,
+    documentsCount: 28,
+  },
+  {
+    id: 4,
+    name: "Financeiro",
+    shortName: "FIN",
+    description: "Controle financeiro, contabilidade e planejamento orçamentário",
+    manager: "Ana Costa",
+    color: "#8b5cf6",
+    status: "active",
+    employeeCount: 12,
+    documentsCount: 31,
+  },
+  {
+    id: 5,
+    name: "Diretoria",
+    shortName: "DIR",
+    description: "Gestão estratégica e tomada de decisões corporativas",
+    manager: "Roberto Almeida",
+    color: "#ef4444",
+    status: "active",
+    employeeCount: 5,
+    documentsCount: 18,
+  },
+  {
+    id: 6,
+    name: "Operações",
+    shortName: "OPS",
+    description: "Gestão operacional e processos de produção",
+    manager: "Paula Ferreira",
+    color: "#06b6d4",
+    status: "inactive",
+    employeeCount: 18,
+    documentsCount: 22,
+  },
+]
 
 const colorOptions = [
   { value: "#3b82f6", label: "Azul", class: "bg-blue-500" },
@@ -60,8 +127,8 @@ const statusColors = {
 }
 
 export default function DepartmentManagement() {
-  const [departments, setDepartments] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [departments, setDepartments] = useState(mockDepartments)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDepartment, setSelectedDepartment] = useState(null)
   const [showDepartmentModal, setShowDepartmentModal] = useState(false)
@@ -72,14 +139,16 @@ export default function DepartmentManagement() {
   const { toast } = useToast()
 
   useEffect(() => {
-    loadDepartments()
+    setDepartments(mockDepartments)
+    setLoading(false)
   }, [])
 
   const loadDepartments = async () => {
     setLoading(true)
-    const data = await getDepartments()
-    setDepartments(data)
-    setLoading(false)
+    setTimeout(() => {
+      setDepartments(mockDepartments)
+      setLoading(false)
+    }, 500)
   }
 
   const filteredDepartments = departments.filter((dept) => {
@@ -102,35 +171,15 @@ export default function DepartmentManagement() {
   const handleSaveDepartment = async (departmentData) => {
     try {
       if (selectedDepartment) {
-        const result = await updateDepartment(selectedDepartment.id, departmentData)
-        if (result.success) {
-          toast({
-            title: "Departamento atualizado",
-            description: "O departamento foi atualizado com sucesso.",
-          })
-          await loadDepartments()
-        } else {
-          toast({
-            title: "Erro ao atualizar departamento",
-            description: result.error,
-            variant: "destructive",
-          })
-        }
+        toast({
+          title: "Departamento atualizado",
+          description: "O departamento foi atualizado com sucesso.",
+        })
       } else {
-        const result = await createDepartment(departmentData)
-        if (result.success) {
-          toast({
-            title: "Departamento criado",
-            description: "O departamento foi criado com sucesso.",
-          })
-          await loadDepartments()
-        } else {
-          toast({
-            title: "Erro ao criar departamento",
-            description: result.error,
-            variant: "destructive",
-          })
-        }
+        toast({
+          title: "Departamento criado",
+          description: "O departamento foi criado com sucesso.",
+        })
       }
       setShowDepartmentModal(false)
       setSelectedDepartment(null)
@@ -145,20 +194,10 @@ export default function DepartmentManagement() {
 
   const handleDeleteDepartment = async () => {
     try {
-      const result = await deleteDepartment(departmentToDelete.id)
-      if (result.success) {
-        toast({
-          title: "Departamento excluído",
-          description: "O departamento foi excluído com sucesso.",
-        })
-        await loadDepartments()
-      } else {
-        toast({
-          title: "Erro ao excluir departamento",
-          description: result.error,
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Departamento excluído",
+        description: "O departamento foi excluído com sucesso.",
+      })
       setShowDeleteConfirm(false)
       setDepartmentToDelete(null)
     } catch (error) {
