@@ -174,7 +174,7 @@ export default function Sidebar({ activeView, onViewChange, pendingApprovalsCoun
                   <FileText className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900">TrackDoc</h2>
+                  <h2 className="font-bold text-gray-900">Trackdoc</h2>
                   <p className="text-xs text-gray-500">Gestão de Documentos</p>
                 </div>
               </div>
