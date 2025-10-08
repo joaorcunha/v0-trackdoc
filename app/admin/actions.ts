@@ -1,6 +1,7 @@
 "use server"
 
 import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { revalidatePath } from "next/cache"
 
 // Tipos para as entidades
@@ -57,23 +58,53 @@ interface Workflow {
   company_id: string
 }
 
+interface Notification {
+  id: string
+  title: string
+  message: string
+  type: string
+  user_id: string
+  company_id: string
+  entity_type: string | null
+  entity_id: string | null
+  created_at: string
+  read: boolean
+}
+
 // Helper function to get current user's company_id
 async function getCurrentUserCompanyId(): Promise<string | null> {
-  const supabase = createServerSupabaseClient()
-
+  const supabase = await createServerSupabaseClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return null
 
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  if (!user) {
+    console.log("[v0] getCurrentUserCompanyId: Nenhum usuário autenticado")
+    return null
+  }
 
-  return profile?.company_id || null
+  console.log("[v0] getCurrentUserCompanyId: Usuário autenticado:", user.id)
+
+  const adminClient = createAdminClient()
+  const { data: profile, error } = await adminClient.from("profiles").select("company_id").eq("id", user.id).single()
+
+  if (error) {
+    console.error("[v0] getCurrentUserCompanyId: Erro ao buscar profile:", error)
+    return null
+  }
+
+  if (!profile) {
+    console.error("[v0] getCurrentUserCompanyId: Profile não encontrado para usuário:", user.id)
+    return null
+  }
+
+  console.log("[v0] getCurrentUserCompanyId: company_id encontrado:", profile.company_id)
+  return profile.company_id
 }
 
 /* --- CATEGORIES --- */
 export async function getCategories(): Promise<Category[]> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase.from("categories").select("*").order("name")
   if (error) {
     console.error("Erro ao buscar categorias:", error)
@@ -83,7 +114,7 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export async function createCategory(categoryData: any) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const companyId = await getCurrentUserCompanyId()
 
   if (!companyId) {
@@ -110,7 +141,7 @@ export async function createCategory(categoryData: any) {
 }
 
 export async function updateCategory(id: string, categoryData: any) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { data, error } = await supabase
     .from("categories")
@@ -132,7 +163,7 @@ export async function updateCategory(id: string, categoryData: any) {
 }
 
 export async function deleteCategory(id: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { error } = await supabase.from("categories").delete().eq("id", id)
 
@@ -146,7 +177,7 @@ export async function deleteCategory(id: string) {
 
 /* --- DEPARTMENTS --- */
 export async function getDepartments(): Promise<Department[]> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase.from("departments").select("*").order("name")
   if (error) {
     console.error("Erro ao buscar departamentos:", error)
@@ -156,7 +187,7 @@ export async function getDepartments(): Promise<Department[]> {
 }
 
 export async function createDepartment(departmentData: any) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const companyId = await getCurrentUserCompanyId()
 
   if (!companyId) {
@@ -184,7 +215,7 @@ export async function createDepartment(departmentData: any) {
 }
 
 export async function updateDepartment(id: string, departmentData: any) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { data, error } = await supabase
     .from("departments")
@@ -207,7 +238,7 @@ export async function updateDepartment(id: string, departmentData: any) {
 }
 
 export async function deleteDepartment(id: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { error } = await supabase.from("departments").delete().eq("id", id)
 
@@ -221,7 +252,7 @@ export async function deleteDepartment(id: string) {
 
 /* --- DOCUMENT TYPES --- */
 export async function getDocumentTypes(): Promise<DocumentType[]> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase.from("document_types").select("*").order("name")
   if (error) {
     console.error("Erro ao buscar tipos de documento:", error)
@@ -231,7 +262,7 @@ export async function getDocumentTypes(): Promise<DocumentType[]> {
 }
 
 export async function createDocumentType(documentTypeData: any) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const companyId = await getCurrentUserCompanyId()
 
   if (!companyId) {
@@ -263,7 +294,7 @@ export async function createDocumentType(documentTypeData: any) {
 }
 
 export async function updateDocumentType(id: string, documentTypeData: any) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { data, error } = await supabase
     .from("document_types")
@@ -290,7 +321,7 @@ export async function updateDocumentType(id: string, documentTypeData: any) {
 }
 
 export async function deleteDocumentType(id: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { error } = await supabase.from("document_types").delete().eq("id", id)
 
@@ -304,8 +335,15 @@ export async function deleteDocumentType(id: string) {
 
 /* --- USERS --- */
 export async function getUsers(): Promise<User[]> {
-  const supabase = createServerSupabaseClient()
-  const { data, error } = await supabase.from("profiles").select("*").order("full_name")
+  const adminClient = createAdminClient()
+  const companyId = await getCurrentUserCompanyId()
+
+  if (!companyId) {
+    console.error("Erro ao buscar usuários: Usuário não autenticado")
+    return []
+  }
+
+  const { data, error } = await adminClient.from("profiles").select("*").eq("company_id", companyId).order("full_name")
 
   if (error) {
     console.error("Erro ao buscar usuários:", error)
@@ -314,10 +352,51 @@ export async function getUsers(): Promise<User[]> {
   return data
 }
 
-export async function updateUser(id: string, userData: any) {
-  const supabase = createServerSupabaseClient()
+export async function getCurrentUser() {
+  console.log("[v0] getCurrentUser: Iniciando busca do usuário atual")
+  const supabase = await createServerSupabaseClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  const { data, error } = await supabase
+  if (!user) {
+    console.log("[v0] getCurrentUser: Nenhum usuário autenticado")
+    return null
+  }
+
+  console.log("[v0] getCurrentUser: Usuário autenticado encontrado:", user.id, user.email)
+
+  const adminClient = createAdminClient()
+  const { data: profile, error } = await adminClient
+    .from("profiles")
+    .select("id, email, full_name, role, company_id")
+    .eq("id", user.id)
+    .single()
+
+  if (error || !profile) {
+    console.error("[v0] getCurrentUser: Erro ao buscar perfil do usuário:", error)
+    return null
+  }
+
+  console.log("[v0] getCurrentUser: Perfil encontrado:", profile)
+  return profile
+}
+
+export async function updateUser(id: string, userData: any) {
+  const adminClient = createAdminClient()
+  const companyId = await getCurrentUserCompanyId()
+
+  if (!companyId) {
+    return { success: false, error: "Usuário não autenticado" }
+  }
+
+  const { data: existingUser } = await adminClient.from("profiles").select("company_id").eq("id", id).single()
+
+  if (!existingUser || existingUser.company_id !== companyId) {
+    return { success: false, error: "Usuário não encontrado ou sem permissão" }
+  }
+
+  const { data, error } = await adminClient
     .from("profiles")
     .update({
       full_name: userData.full_name,
@@ -337,9 +416,20 @@ export async function updateUser(id: string, userData: any) {
 }
 
 export async function deleteUser(id: string) {
-  const supabase = createServerSupabaseClient()
+  const adminClient = createAdminClient()
+  const companyId = await getCurrentUserCompanyId()
 
-  const { error } = await supabase.from("profiles").update({ status: "inactive" }).eq("id", id)
+  if (!companyId) {
+    return { success: false, error: "Usuário não autenticado" }
+  }
+
+  const { data: existingUser } = await adminClient.from("profiles").select("company_id").eq("id", id).single()
+
+  if (!existingUser || existingUser.company_id !== companyId) {
+    return { success: false, error: "Usuário não encontrado ou sem permissão" }
+  }
+
+  const { error } = await adminClient.from("profiles").update({ status: "inactive" }).eq("id", id)
 
   if (error) {
     console.error("Erro ao desativar usuário:", error)
@@ -351,7 +441,7 @@ export async function deleteUser(id: string) {
 
 /* --- WORKFLOWS --- */
 export async function getWorkflows(): Promise<Workflow[]> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase.from("approval_workflows").select("*").order("name")
 
   if (error) {
@@ -362,7 +452,7 @@ export async function getWorkflows(): Promise<Workflow[]> {
 }
 
 export async function createWorkflow(workflowData: any) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const companyId = await getCurrentUserCompanyId()
 
   if (!companyId) {
@@ -390,7 +480,7 @@ export async function createWorkflow(workflowData: any) {
 }
 
 export async function updateWorkflow(id: string, workflowData: any) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { data, error } = await supabase
     .from("approval_workflows")
@@ -413,12 +503,71 @@ export async function updateWorkflow(id: string, workflowData: any) {
 }
 
 export async function deleteWorkflow(id: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { error } = await supabase.from("approval_workflows").delete().eq("id", id)
 
   if (error) {
     console.error("Erro ao deletar workflow:", error)
+    return { success: false, error: error.message }
+  }
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+/* --- NOTIFICATIONS --- */
+export async function getNotifications(): Promise<Notification[]> {
+  const supabase = await createServerSupabaseClient()
+  const companyId = await getCurrentUserCompanyId()
+
+  if (!companyId) {
+    console.error("Erro ao buscar notificações: Usuário não autenticado")
+    return []
+  }
+
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("Erro ao buscar notificações:", error)
+    return []
+  }
+  return data || []
+}
+
+export async function markNotificationAsRead(id: string) {
+  const supabase = await createServerSupabaseClient()
+  const companyId = await getCurrentUserCompanyId()
+
+  if (!companyId) {
+    return { success: false, error: "Usuário não autenticado" }
+  }
+
+  const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id).eq("company_id", companyId)
+
+  if (error) {
+    console.error("Erro ao marcar notificação como lida:", error)
+    return { success: false, error: error.message }
+  }
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function deleteNotification(id: string) {
+  const supabase = await createServerSupabaseClient()
+  const companyId = await getCurrentUserCompanyId()
+
+  if (!companyId) {
+    return { success: false, error: "Usuário não autenticado" }
+  }
+
+  const { error } = await supabase.from("notifications").delete().eq("id", id).eq("company_id", companyId)
+
+  if (error) {
+    console.error("Erro ao deletar notificação:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
