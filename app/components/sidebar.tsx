@@ -22,7 +22,7 @@ import {
 import { cn } from "@/lib/utils"
 import LogoutButton from "./logout-button"
 import QuickSearchModal from "./quick-search-modal"
-import { getCurrentUser } from "@/app/admin/actions"
+import { getCurrentUser, getUnreadNotificationsCount } from "@/app/admin/actions"
 
 interface SidebarProps {
   activeView: string
@@ -40,6 +40,7 @@ export default function Sidebar({ activeView, onViewChange, pendingApprovalsCoun
     email: string
   } | null>(null)
   const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -65,6 +66,21 @@ export default function Sidebar({ activeView, onViewChange, pendingApprovalsCoun
       }
     }
     loadUserData()
+  }, [])
+
+  useEffect(() => {
+    const loadNotificationsCount = async () => {
+      try {
+        const count = await getUnreadNotificationsCount()
+        setUnreadNotificationsCount(count)
+      } catch (error) {
+        console.error("[v0] Sidebar: Erro ao carregar contagem de notificações:", error)
+      }
+    }
+    loadNotificationsCount()
+    // Recarregar a cada 30 segundos
+    const interval = setInterval(loadNotificationsCount, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const toggleSidebar = () => {
@@ -110,7 +126,7 @@ export default function Sidebar({ activeView, onViewChange, pendingApprovalsCoun
       id: "notifications",
       label: "Notificações",
       icon: Bell,
-      badge: "2",
+      badge: unreadNotificationsCount > 0 ? unreadNotificationsCount.toString() : null,
     },
     {
       id: "admin",

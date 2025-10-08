@@ -573,3 +573,25 @@ export async function deleteNotification(id: string) {
   revalidatePath("/admin")
   return { success: true }
 }
+
+export async function getUnreadNotificationsCount(): Promise<number> {
+  const supabase = await createServerSupabaseClient()
+  const companyId = await getCurrentUserCompanyId()
+
+  if (!companyId) {
+    console.error("Erro ao contar notificações: Usuário não autenticado")
+    return 0
+  }
+
+  const { count, error } = await supabase
+    .from("notifications")
+    .select("*", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("read", false)
+
+  if (error) {
+    console.error("Erro ao contar notificações não lidas:", error)
+    return 0
+  }
+  return count || 0
+}
