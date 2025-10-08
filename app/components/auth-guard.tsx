@@ -17,31 +17,42 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
+    console.log("[v0] AuthGuard: Verificando autenticação para rota:", pathname)
+
     const checkAuth = () => {
       const publicRoutes = ["/login", "/signup", "/signup/success"]
       const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
 
+      console.log("[v0] AuthGuard: É rota pública?", isPublicRoute)
+
       // Verificar se está em uma rota pública
       if (isPublicRoute) {
+        console.log("[v0] AuthGuard: Rota pública, permitindo acesso")
         setIsLoading(false)
         return
       }
 
       // Verificar autenticação
       const authStatus = localStorage.getItem("isAuthenticated")
+      console.log("[v0] AuthGuard: Status de autenticação no localStorage:", authStatus)
 
       if (authStatus === "true") {
+        console.log("[v0] AuthGuard: Usuário autenticado, permitindo acesso")
         setIsAuthenticated(true)
+        setIsLoading(false)
       } else {
+        console.log("[v0] AuthGuard: Usuário não autenticado, redirecionando para login")
         // Redirecionar para login se não autenticado
         router.push("/login")
-        return
       }
-
-      setIsLoading(false)
     }
 
-    checkAuth()
+    // Adicionar um pequeno delay para garantir que o localStorage foi setado
+    const timer = setTimeout(() => {
+      checkAuth()
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [pathname, router])
 
   // Mostrar loading enquanto verifica autenticação
