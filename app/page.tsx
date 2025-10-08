@@ -54,8 +54,255 @@ import DocumentAccessReport from "./components/admin/document-access-report"
 import DocumentCreationSelector from "./components/document-creation-selector"
 import DocumentEditor from "./components/document-editor" // Imported DocumentEditor
 
-// Dados fictícios removidos para testes em produção
-const mockDocuments = []
+const mockDocuments = [
+  {
+    id: 1,
+    title: "Política de Segurança da Informação",
+    number: "POL-TI-001",
+    version: "2.0",
+    author: "Carlos Silva",
+    sector: "TI",
+    status: "approved",
+    fileType: "pdf",
+    fileName: "politica_seguranca_v2.pdf",
+    createdAt: "2024-01-15",
+    updatedAt: "2024-03-10",
+    approvals: 3,
+    totalApprovals: 3,
+  },
+  {
+    id: 2,
+    title: "Procedimento de Onboarding",
+    number: "PROC-RH-012",
+    version: "1.5",
+    author: "Ana Santos",
+    sector: "RH",
+    status: "approved",
+    fileType: "word",
+    fileName: "onboarding_procedimento.docx",
+    createdAt: "2024-02-20",
+    updatedAt: "2024-03-15",
+    approvals: 2,
+    totalApprovals: 2,
+  },
+  {
+    id: 3,
+    title: "Manual de Vendas - Q1 2024",
+    number: "MAN-VEN-008",
+    version: "3.2",
+    author: "Roberto Lima",
+    sector: "Vendas",
+    status: "pending",
+    fileType: "powerpoint",
+    fileName: "manual_vendas_q1.pptx",
+    createdAt: "2024-03-01",
+    updatedAt: "2024-03-20",
+    approvals: 1,
+    totalApprovals: 2,
+  },
+  {
+    id: 4,
+    title: "Relatório Financeiro Anual 2023",
+    number: "REL-FIN-045",
+    version: "1.0",
+    author: "Mariana Costa",
+    sector: "Financeiro",
+    status: "approved",
+    fileType: "excel",
+    fileName: "relatorio_financeiro_2023.xlsx",
+    createdAt: "2024-01-05",
+    updatedAt: "2024-01-30",
+    approvals: 3,
+    totalApprovals: 3,
+  },
+  {
+    id: 5,
+    title: "Política de Trabalho Remoto",
+    number: "POL-RH-023",
+    version: "1.0",
+    author: "Ana Santos",
+    sector: "RH",
+    status: "draft",
+    fileType: "word",
+    fileName: "politica_trabalho_remoto.docx",
+    createdAt: "2024-03-18",
+    updatedAt: "2024-03-22",
+    approvals: 0,
+    totalApprovals: 2,
+  },
+  {
+    id: 6,
+    title: "Ata de Reunião - Diretoria Março",
+    number: "ATA-DIR-015",
+    version: "1.0",
+    author: "Fernando Oliveira",
+    sector: "Diretoria",
+    status: "approved",
+    fileType: "pdf",
+    fileName: "ata_diretoria_marco.pdf",
+    createdAt: "2024-03-05",
+    updatedAt: "2024-03-08",
+    approvals: 4,
+    totalApprovals: 4,
+  },
+  {
+    id: 7,
+    title: "Procedimento de Backup de Dados",
+    number: "PROC-TI-034",
+    version: "2.1",
+    author: "Carlos Silva",
+    sector: "TI",
+    status: "pending",
+    fileType: "pdf",
+    fileName: "procedimento_backup.pdf",
+    createdAt: "2024-03-10",
+    updatedAt: "2024-03-21",
+    approvals: 2,
+    totalApprovals: 3,
+  },
+  {
+    id: 8,
+    title: "Plano de Metas - Vendas 2024",
+    number: "PLAN-VEN-019",
+    version: "1.0",
+    author: "Roberto Lima",
+    sector: "Vendas",
+    status: "approved",
+    fileType: "powerpoint",
+    fileName: "plano_metas_2024.pptx",
+    createdAt: "2024-01-10",
+    updatedAt: "2024-01-25",
+    approvals: 2,
+    totalApprovals: 2,
+  },
+  {
+    id: 9,
+    title: "Política de Férias e Licenças",
+    number: "POL-RH-018",
+    version: "3.0",
+    author: "Ana Santos",
+    sector: "RH",
+    status: "approved",
+    fileType: "word",
+    fileName: "politica_ferias.docx",
+    createdAt: "2024-02-01",
+    updatedAt: "2024-02-15",
+    approvals: 2,
+    totalApprovals: 2,
+  },
+  {
+    id: 10,
+    title: "Orçamento Anual 2024",
+    number: "ORC-FIN-002",
+    version: "1.2",
+    author: "Mariana Costa",
+    sector: "Financeiro",
+    status: "draft",
+    fileType: "excel",
+    fileName: "orcamento_2024.xlsx",
+    createdAt: "2024-03-15",
+    updatedAt: "2024-03-23",
+    approvals: 0,
+    totalApprovals: 3,
+  },
+  {
+    id: 11,
+    title: "Manual de Boas Práticas de TI",
+    number: "MAN-TI-007",
+    version: "1.8",
+    author: "Carlos Silva",
+    sector: "TI",
+    status: "approved",
+    fileType: "pdf",
+    fileName: "manual_boas_praticas.pdf",
+    createdAt: "2024-02-10",
+    updatedAt: "2024-03-05",
+    approvals: 3,
+    totalApprovals: 3,
+  },
+  {
+    id: 12,
+    title: "Estratégia Comercial Q2 2024",
+    number: "EST-VEN-011",
+    version: "1.0",
+    author: "Roberto Lima",
+    sector: "Vendas",
+    status: "pending",
+    fileType: "powerpoint",
+    fileName: "estrategia_q2.pptx",
+    createdAt: "2024-03-20",
+    updatedAt: "2024-03-24",
+    approvals: 0,
+    totalApprovals: 2,
+  },
+]
+
+const monthlyEvolutionData = [
+  { month: "Set", TI: 12, Vendas: 8, RH: 6, Financeiro: 4, Diretoria: 3 },
+  { month: "Out", TI: 15, Vendas: 10, RH: 8, Financeiro: 5, Diretoria: 4 },
+  { month: "Nov", TI: 18, Vendas: 12, RH: 9, Financeiro: 6, Diretoria: 5 },
+  { month: "Dez", TI: 14, Vendas: 9, RH: 7, Financeiro: 8, Diretoria: 6 },
+  { month: "Jan", TI: 20, Vendas: 15, RH: 10, Financeiro: 7, Diretoria: 5 },
+  { month: "Fev", TI: 22, Vendas: 18, RH: 12, Financeiro: 9, Diretoria: 7 },
+  { month: "Mar", TI: 25, Vendas: 20, RH: 14, Financeiro: 10, Diretoria: 8 },
+]
+
+const recentActivity = [
+  {
+    id: 1,
+    action: "Documento aprovado",
+    document: "Política de Segurança da Informação",
+    user: "Carlos Silva",
+    time: "Há 2 horas",
+    icon: CheckCircle,
+    color: "text-green-600",
+  },
+  {
+    id: 2,
+    action: "Novo documento criado",
+    document: "Estratégia Comercial Q2 2024",
+    user: "Roberto Lima",
+    time: "Há 4 horas",
+    icon: FileText,
+    color: "text-blue-600",
+  },
+  {
+    id: 3,
+    action: "Documento enviado para aprovação",
+    document: "Procedimento de Backup de Dados",
+    user: "Carlos Silva",
+    time: "Há 6 horas",
+    icon: Clock,
+    color: "text-yellow-600",
+  },
+  {
+    id: 4,
+    action: "Documento editado",
+    document: "Orçamento Anual 2024",
+    user: "Mariana Costa",
+    time: "Há 8 horas",
+    icon: Edit,
+    color: "text-gray-600",
+  },
+  {
+    id: 5,
+    action: "Documento aprovado",
+    document: "Plano de Metas - Vendas 2024",
+    user: "Roberto Lima",
+    time: "Há 1 dia",
+    icon: CheckCircle,
+    color: "text-green-600",
+  },
+]
+
+const sectorDistribution = [
+  { sector: "TI", count: 25, percentage: 31, color: "#3b82f6" },
+  { sector: "Vendas", count: 20, percentage: 25, color: "#10b981" },
+  { sector: "RH", count: 14, percentage: 17, color: "#f59e0b" },
+  { sector: "Financeiro", count: 10, percentage: 12, color: "#8b5cf6" },
+  { sector: "Diretoria", count: 8, percentage: 10, color: "#ef4444" },
+  { sector: "Outros", count: 4, percentage: 5, color: "#6b7280" },
+]
 
 // Função para obter ícone do formato do arquivo
 const getFileTypeIcon = (fileType: string) => {
@@ -118,8 +365,11 @@ export default function DocumentManagementPlatform() {
   const [documentListFilter, setDocumentListFilter] = useState("all") // 'all', 'approved', 'pending', 'draft'
   const [documentListTitle, setDocumentListTitle] = useState("")
 
-  // Dados fictícios removidos para testes em produção
-  const monthlyEvolutionData = []
+  // Dados fictícios removidos para testes em produção - REPLACED BY mockDocuments ABOVE
+  // const mockDocuments = []
+
+  // Dados fictícios removidos para testes em produção - REPLACED BY monthlyEvolutionData ABOVE
+  // const monthlyEvolutionData = []
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch =
@@ -661,10 +911,23 @@ export default function DocumentManagementPlatform() {
             <CardDescription>Últimas ações realizadas no sistema</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Atividade recente agora vazia, esperando dados reais */}
-            <div className="text-center py-4 text-gray-500">
-              <p>Nenhuma atividade recente para exibir.</p>
-            </div>
+            {recentActivity.map((activity) => {
+              const Icon = activity.icon
+              return (
+                <div key={activity.id} className="flex items-start space-x-3">
+                  <div className={`mt-1 ${activity.color}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                    <p className="text-sm text-gray-600 truncate">{activity.document}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {activity.user} • {activity.time}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
           </CardContent>
         </Card>
 
@@ -674,10 +937,28 @@ export default function DocumentManagementPlatform() {
             <CardDescription>Distribuição de documentos por departamento</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Distribuição por setor agora vazia, esperando dados reais */}
-            <div className="text-center py-4 text-gray-500">
-              <p>Nenhum dado de distribuição por setor para exibir.</p>
-            </div>
+            {sectorDistribution.map((item) => (
+              <div key={item.sector} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                    <span className="font-medium text-gray-900">{item.sector}</span>
+                  </div>
+                  <span className="text-gray-600">
+                    {item.count} ({item.percentage}%)
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${item.percentage}%`,
+                      backgroundColor: item.color,
+                    }}
+                  ></div>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -22,7 +22,6 @@ import {
 import { cn } from "@/lib/utils"
 import LogoutButton from "./logout-button"
 import QuickSearchModal from "./quick-search-modal"
-import { getCurrentUser, getUnreadNotificationsCount } from "@/app/admin/actions"
 
 interface SidebarProps {
   activeView: string
@@ -34,54 +33,12 @@ export default function Sidebar({ activeView, onViewChange, pendingApprovalsCoun
   const [isExpanded, setIsExpanded] = useState(true)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [showQuickSearch, setShowQuickSearch] = useState(false)
-  const [currentUser, setCurrentUser] = useState<{
-    full_name: string
-    role: string
-    email: string
-  } | null>(null)
-  const [isLoadingUser, setIsLoadingUser] = useState(true)
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
-
-  useEffect(() => {
-    const loadUserData = async () => {
-      console.log("[v0] Sidebar: Iniciando carregamento de dados do usuário")
-      setIsLoadingUser(true)
-      try {
-        const user = await getCurrentUser()
-        console.log("[v0] Sidebar: Dados do usuário recebidos:", user)
-        if (user) {
-          setCurrentUser({
-            full_name: user.full_name,
-            role: user.role === "admin" ? "Administrador" : user.role === "manager" ? "Gerente" : "Usuário",
-            email: user.email,
-          })
-          console.log("[v0] Sidebar: Estado do usuário atualizado")
-        } else {
-          console.log("[v0] Sidebar: Nenhum usuário retornado")
-        }
-      } catch (error) {
-        console.error("[v0] Sidebar: Erro ao carregar dados do usuário:", error)
-      } finally {
-        setIsLoadingUser(false)
-      }
-    }
-    loadUserData()
-  }, [])
-
-  useEffect(() => {
-    const loadNotificationsCount = async () => {
-      try {
-        const count = await getUnreadNotificationsCount()
-        setUnreadNotificationsCount(count)
-      } catch (error) {
-        console.error("[v0] Sidebar: Erro ao carregar contagem de notificações:", error)
-      }
-    }
-    loadNotificationsCount()
-    // Recarregar a cada 30 segundos
-    const interval = setInterval(loadNotificationsCount, 30000)
-    return () => clearInterval(interval)
-  }, [])
+  const [currentUser] = useState({
+    full_name: "João Ricardo Silva",
+    role: "Administrador",
+    email: "joao.silva@trackdoc.com",
+  })
+  const [isLoadingUser] = useState(false)
 
   const toggleSidebar = () => {
     setIsExpanded(!isExpanded)
@@ -126,7 +83,7 @@ export default function Sidebar({ activeView, onViewChange, pendingApprovalsCoun
       id: "notifications",
       label: "Notificações",
       icon: Bell,
-      badge: unreadNotificationsCount > 0 ? unreadNotificationsCount.toString() : null,
+      badge: null,
     },
     {
       id: "admin",
@@ -174,7 +131,7 @@ export default function Sidebar({ activeView, onViewChange, pendingApprovalsCoun
                   <FileText className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900">Trackdoc</h2>
+                  <h2 className="font-bold text-gray-900">TrackDoc</h2>
                   <p className="text-xs text-gray-500">Gestão de Documentos</p>
                 </div>
               </div>
@@ -194,22 +151,8 @@ export default function Sidebar({ activeView, onViewChange, pendingApprovalsCoun
             </Avatar>
             {isExpanded && (
               <div className="flex-1 min-w-0">
-                {isLoadingUser ? (
-                  <>
-                    <p className="text-sm font-medium text-gray-400 truncate">Carregando...</p>
-                    <p className="text-xs text-gray-400 truncate">Aguarde</p>
-                  </>
-                ) : currentUser ? (
-                  <>
-                    <p className="text-sm font-medium text-gray-900 truncate">{currentUser.full_name}</p>
-                    <p className="text-xs text-gray-500 truncate">{currentUser.role}</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-medium text-gray-400 truncate">Usuário não encontrado</p>
-                    <p className="text-xs text-gray-400 truncate">Erro ao carregar</p>
-                  </>
-                )}
+                <p className="text-sm font-medium text-gray-900 truncate">{currentUser.full_name}</p>
+                <p className="text-xs text-gray-500 truncate">{currentUser.role}</p>
               </div>
             )}
           </div>

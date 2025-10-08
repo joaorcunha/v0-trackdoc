@@ -1,8 +1,6 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { revalidatePath } from "next/cache"
 
 interface LoginData {
   email: string
@@ -52,14 +50,12 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
     }
 
     console.log("[v0] Server: Login realizado com sucesso para:", authData.user.email)
-    console.log("[v0] Server: Sessão criada, redirecionando...")
 
-    revalidatePath("/", "layout")
-    redirect("/")
-  } catch (error: any) {
-    if (error?.message === "NEXT_REDIRECT") {
-      throw error // Re-throw redirect errors
+    return {
+      success: true,
+      emailConfirmed: true,
     }
+  } catch (error: any) {
     console.error("[v0] Server: Erro inesperado no login:", error)
     return {
       success: false,

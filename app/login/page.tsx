@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
-import { createClient } from "@/lib/supabase/client"
+import { loginUser } from "@/app/actions/login"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -74,48 +74,30 @@ export default function LoginPage() {
     setSuccess("")
 
     try {
-      console.log("[v0] Client: Tentando fazer login...")
+      console.log("[v0] Tentando fazer login...")
 
-      const supabase = createClient()
-
-      // Authenticate with Supabase no cliente
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const result = await loginUser({
         email: formData.email,
         password: formData.password,
       })
 
-      if (authError) {
-        console.error("[v0] Client: Erro ao fazer login:", authError)
-        setError("Email ou senha incorretos")
-        setIsLoading(false)
+      if (!result.success) {
+        setError(result.error || "Erro ao fazer login")
         return
       }
 
-      if (!authData.user) {
-        setError("Email ou senha incorretos")
-        setIsLoading(false)
-        return
-      }
+      console.log("[v0] Login bem-sucedido, redirecionando...")
+      setSuccess("Login realizado com sucesso!")
 
-      if (!authData.user.email_confirmed_at) {
-        console.log("[v0] Client: Email não confirmado para:", authData.user.email)
-        setError("Por favor, confirme seu email antes de fazer login. Verifique sua caixa de entrada.")
-        setIsLoading(false)
-        return
-      }
-
-      console.log("[v0] Client: Login realizado com sucesso para:", authData.user.email)
-      console.log("[v0] Client: Sessão criada, redirecionando...")
-
-      // Setar flag de autenticação no localStorage para o AuthGuard
       localStorage.setItem("isAuthenticated", "true")
 
-      // Redirecionar para a página principal
-      router.push("/")
+      // Force router to refresh and redirect
       router.refresh()
+      router.push("/")
     } catch (err: any) {
-      console.error("[v0] Client: Erro inesperado no login:", err)
+      console.error("[v0] Erro no login:", err)
       setError("Erro ao fazer login. Tente novamente.")
+    } finally {
       setIsLoading(false)
     }
   }
