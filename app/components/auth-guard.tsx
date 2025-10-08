@@ -42,17 +42,13 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         setIsLoading(false)
       } else {
         console.log("[v0] AuthGuard: Usuário não autenticado, redirecionando para login")
+        setIsLoading(false)
         // Redirecionar para login se não autenticado
         router.push("/login")
       }
     }
 
-    // Adicionar um pequeno delay para garantir que o localStorage foi setado
-    const timer = setTimeout(() => {
-      checkAuth()
-    }, 100)
-
-    return () => clearTimeout(timer)
+    checkAuth()
   }, [pathname, router])
 
   // Mostrar loading enquanto verifica autenticação
