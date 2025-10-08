@@ -7,9 +7,9 @@ import AuthGuard from "./components/auth-guard"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "TrackDoc - Sistema de Gestão de Documentos",
+  title: "Trackdoc I Gestão de Documentos",
   description: "Plataforma moderna para gestão interna de documentos corporativos",
-    generator: 'v0.app'
+  generator: "v0.app",
 }
 
 export default function RootLayout({
