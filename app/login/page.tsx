@@ -107,9 +107,6 @@ export default function LoginPage() {
       console.log("[v0] Client: Login realizado com sucesso para:", authData.user.email)
       console.log("[v0] Client: Sessão criada, redirecionando...")
 
-      // Setar flag de autenticação no localStorage para o AuthGuard
-      localStorage.setItem("isAuthenticated", "true")
-
       // Redirecionar para a página principal
       router.push("/")
       router.refresh()
