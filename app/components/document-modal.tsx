@@ -27,7 +27,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@/lib/supabase/client"
 
 interface DocumentModalProps {
   open: boolean
@@ -91,7 +91,7 @@ const fileTypes = [
 ]
 
 export default function DocumentModal({ open, onOpenChange, document, mode = "create", onSave }: DocumentModalProps) {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
 
   const [formData, setFormData] = useState({
     number: "",
