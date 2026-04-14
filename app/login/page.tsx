@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
-import { loginUser } from "@/app/actions/login"
+import { createClient } from "@/lib/supabase/client"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -75,14 +75,34 @@ export default function LoginPage() {
 
     try {
       console.log("[v0] Tentando fazer login...")
-
-      const result = await loginUser({
+      
+      const supabase = createClient()
+      
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       })
 
-      if (!result.success) {
-        setError(result.error || "Erro ao fazer login")
+      if (authError) {
+        console.error("[v0] Erro de autenticação:", authError.message)
+        
+        if (authError.message?.includes("Invalid login credentials")) {
+          setError("Email ou senha incorretos")
+        } else if (authError.message?.includes("Email not confirmed")) {
+          setError("Por favor, confirme seu email antes de fazer login.")
+        } else {
+          setError(authError.message || "Erro ao fazer login")
+        }
+        return
+      }
+
+      if (!data.user) {
+        setError("Email ou senha incorretos")
+        return
+      }
+
+      if (!data.user.email_confirmed_at) {
+        setError("Por favor, confirme seu email antes de fazer login. Verifique sua caixa de entrada.")
         return
       }
 

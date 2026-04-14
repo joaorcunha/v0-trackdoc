@@ -17,6 +17,15 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
   try {
     console.log("[v0] Server: Tentando login para:", data.email)
 
+    // Validate environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error("[v0] Server: Variáveis de ambiente do Supabase não configuradas")
+      return {
+        success: false,
+        error: "Erro de configuração do servidor. Contate o suporte.",
+      }
+    }
+
     const supabase = await createClient()
 
     // Authenticate with Supabase
@@ -26,10 +35,27 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
     })
 
     if (authError) {
-      console.error("[v0] Server: Erro ao fazer login:", authError)
+      console.error("[v0] Server: Erro de autenticação:", authError.message, authError.status)
+      
+      // Handle specific error cases
+      if (authError.message?.includes("Invalid login credentials")) {
+        return {
+          success: false,
+          error: "Email ou senha incorretos",
+        }
+      }
+      
+      if (authError.message?.includes("Email not confirmed")) {
+        return {
+          success: false,
+          error: "Por favor, confirme seu email antes de fazer login.",
+          emailConfirmed: false,
+        }
+      }
+      
       return {
         success: false,
-        error: "Email ou senha incorretos",
+        error: authError.message || "Erro ao fazer login",
       }
     }
 
@@ -56,7 +82,7 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
       emailConfirmed: true,
     }
   } catch (error: any) {
-    console.error("[v0] Server: Erro inesperado no login:", error)
+    console.error("[v0] Server: Erro inesperado no login:", error?.message || error)
     return {
       success: false,
       error: "Erro ao fazer login. Tente novamente.",
