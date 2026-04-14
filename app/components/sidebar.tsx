@@ -1,244 +1,173 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
-  FileText,
   LayoutDashboard,
+  FileText,
+  Users,
+  Folder,
+  Clock,
   CheckCircle,
-  Settings,
-  Menu,
-  X,
-  Bell,
   Search,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  HelpCircle,
-  Edit,
+  Mail,
+  BarChart2,
+  ClipboardCheck,
+  ScrollText,
+  GitPullRequest,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import LogoutButton from "./logout-button"
 import QuickSearchModal from "./quick-search-modal"
+import EmailInvitationModal from "./email-invitation-modal"
+import { Badge } from "@/components/ui/badge"
 
-interface SidebarProps {
-  activeView: string
-  onViewChange: (view: string) => void
-  pendingApprovalsCount: number
+// Helper function to get initials
+const getInitials = (name) => {
+  if (!name) return "??"
+  const parts = name.split(" ").filter(Boolean)
+  if (parts.length > 1) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+  return name.substring(0, 2).toUpperCase()
 }
 
-export default function Sidebar({ activeView, onViewChange, pendingApprovalsCount }: SidebarProps) {
-  const [isExpanded, setIsExpanded] = useState(true)
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [showQuickSearch, setShowQuickSearch] = useState(false)
-  const [currentUser] = useState({
-    full_name: "João Ricardo Silva",
-    role: "Administrador",
-    email: "joao.silva@trackdoc.com",
-  })
-  const [isLoadingUser] = useState(false)
+export default function Sidebar({ approvalsCount = 0, activeView, onViewChange }) {
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const [adminSubMenu, setAdminSubMenu] = useState(null)
 
-  const toggleSidebar = () => {
-    setIsExpanded(!isExpanded)
+  const user = {
+    name: "João Silva",
+    email: "joao.silva@example.com",
   }
 
-  const toggleMobileSidebar = () => {
-    setIsMobileOpen(!isMobileOpen)
-  }
-
-  const menuItems = [
+  const navigation = [
+    { name: "Dashboard", href: "/", icon: LayoutDashboard, id: "dashboard" },
+    { name: "Documentos", href: "/documents", icon: FileText, id: "documents" },
     {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      badge: null,
-    },
-    {
-      id: "documents",
-      label: "Documentos",
-      icon: FileText,
-      badge: null,
-    },
-    {
-      id: "editor",
-      label: "Editor",
-      icon: Edit,
-      badge: null,
-    },
-    {
-      id: "ai-create",
-      label: "Criar com IA",
-      icon: Sparkles,
-      badge: "Novo",
-    },
-    {
-      id: "approvals",
-      label: "Aprovações",
+      name: "Aprovações",
+      href: "/approvals",
       icon: CheckCircle,
-      badge: pendingApprovalsCount > 0 ? pendingApprovalsCount.toString() : null,
-    },
-    {
-      id: "notifications",
-      label: "Notificações",
-      icon: Bell,
-      badge: null,
-    },
-    {
-      id: "admin",
-      label: "Administração",
-      icon: Settings,
-      badge: null,
+      badge: approvalsCount > 0 ? approvalsCount : null,
+      id: "approvals",
     },
   ]
 
-  const getUserInitials = (name: string) => {
-    const names = name.split(" ")
-    if (names.length >= 2) {
-      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase()
-    }
-    return name.substring(0, 2).toUpperCase()
-  }
+  const adminNavigation = [
+    { name: "Gerenciar Usuários", href: "/admin/users", icon: Users, id: "users" },
+    { name: "Gerenciar Categorias", href: "/admin/categories", icon: Folder, id: "categories" },
+    { name: "Gerenciar Departamentos", href: "/admin/departments", icon: Folder, id: "departments" },
+    { name: "Tipos de Documento", href: "/admin/document-types", icon: ScrollText, id: "document-types" },
+    { name: "Fluxos de Aprovação", href: "/admin/workflows", icon: GitPullRequest, id: "workflows" },
+    {
+      name: "Relatório de Produtividade",
+      href: "/admin/productivity-report",
+      icon: BarChart2,
+      id: "productivity-report",
+    },
+    {
+      name: "Relatório de Tempo de Aprovação",
+      href: "/admin/approval-time-report",
+      icon: Clock,
+      id: "approval-time-report",
+    },
+    { name: "Relatório de Auditoria", href: "/admin/audit-report", icon: ClipboardCheck, id: "audit-report" },
+  ]
 
   return (
-    <>
-      {/* Mobile Menu Button */}
-      <Button variant="ghost" size="sm" className="fixed top-4 left-4 z-50 md:hidden" onClick={toggleMobileSidebar}>
-        {isMobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-      </Button>
-
-      {/* Mobile Overlay */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={toggleMobileSidebar} />
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={cn(
-          "bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-50 h-screen",
-          "fixed md:relative",
-          isExpanded ? "w-64" : "w-16",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-        )}
-      >
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            {isExpanded && (
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="font-bold text-gray-900">TrackDoc</h2>
-                  <p className="text-xs text-gray-500">Gestão de Documentos</p>
-                </div>
-              </div>
-            )}
-            <Button variant="ghost" size="sm" onClick={toggleSidebar} className="hidden md:flex">
-              {isExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            </Button>
-          </div>
+    <div className="flex h-screen w-64 flex-col border-r bg-gray-100 p-4 dark:border-gray-800 dark:bg-gray-950">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Trackdoc</h2>
+      </div>
+      <nav className="flex-1 space-y-2 py-4">
+        <div className="space-y-2">
+          {navigation.map((item) => {
+            const isActive = activeView === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onViewChange(item.id)}
+                className={`flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors
+        ${
+          isActive
+            ? "bg-blue-500 text-white"
+            : "text-gray-700 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
+        }`}
+              >
+                <item.icon className="mr-3 h-5 w-5" />
+                {item.name}
+                {item.badge && (
+                  <Badge className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white">
+                    {item.badge}
+                  </Badge>
+                )}
+              </button>
+            )
+          })}
         </div>
+        <div className="pt-4">
+          <h3 className="mb-2 px-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Administração</h3>
+          {adminNavigation.map((item) => {
+            const isActive = activeView === "admin" && adminSubMenu === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  onViewChange("admin")
+                  setAdminSubMenu(item.id)
+                }}
+                className={`flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors
+        ${
+          isActive
+            ? "bg-blue-500 text-white"
+            : "text-gray-700 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
+        }`}
+              >
+                <item.icon className="mr-3 h-5 w-5" />
+                {item.name}
+              </button>
+            )
+          })}
+        </div>
+      </nav>
+      <div className="mt-auto space-y-2 border-t border-gray-200 pt-4 dark:border-gray-800">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-gray-700 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
+          onClick={() => setIsSearchModalOpen(true)}
+        >
+          <Search className="mr-2 h-4 w-4" />
+          Pesquisa Rápida
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-gray-700 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800"
+          onClick={() => setIsEmailModalOpen(true)}
+        >
+          <Mail className="mr-2 h-4 w-4" />
+          Convidar por Email
+        </Button>
+        <QuickSearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)} />
+        <EmailInvitationModal isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} />
 
         {/* User Profile */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="/placeholder.svg?height=40&width=40&text=User" />
-              <AvatarFallback>{currentUser ? getUserInitials(currentUser.full_name) : "U"}</AvatarFallback>
+              <AvatarImage src={`/placeholder.svg?height=40&width=40&text=${getInitials(user.name)}`} />
+              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
-            {isExpanded && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{currentUser.full_name}</p>
-                <p className="text-xs text-gray-500 truncate">{currentUser.role}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 overflow-y-auto">
-          <div className="space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              const isActive = activeView === item.id
-
-              return (
-                <Button
-                  key={item.id}
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full transition-colors",
-                    isExpanded ? "justify-start" : "justify-center",
-                    isActive && "bg-blue-50 text-blue-700 border-blue-200",
-                  )}
-                  onClick={() => onViewChange(item.id)}
-                >
-                  <Icon className={cn("h-4 w-4", isExpanded && "mr-3")} />
-                  {isExpanded && (
-                    <>
-                      <span className="flex-1 text-left">{item.label}</span>
-                      {item.badge && (
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          {item.badge}
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                </Button>
-              )
-            })}
-          </div>
-        </nav>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-200 flex-shrink-0">
-          {isExpanded && (
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Ações Rápidas</h3>
-              <div className="space-y-1 p-2 bg-gray-50 rounded-lg border">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-white"
-                  onClick={() => setShowQuickSearch(true)}
-                >
-                  <Search className="h-4 w-4 mr-3" />
-                  Busca Rápida
-                </Button>
-                <Button
-                  variant={activeView === "help" ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-white",
-                    activeView === "help" && "bg-blue-50 text-blue-700 border-blue-200",
-                  )}
-                  onClick={() => onViewChange("help")}
-                >
-                  <HelpCircle className="h-4 w-4 mr-3" />
-                  Ajuda
-                </Button>
-              </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900 dark:text-gray-50">{user.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
             </div>
-          )}
-
-          <div className="pt-3 border-t border-gray-100">
-            <LogoutButton
-              className={cn(
-                "w-full text-red-600 hover:text-red-700 hover:bg-red-50",
-                isExpanded ? "justify-start" : "justify-center",
-              )}
-              variant="ghost"
-              size="sm"
-              showIcon={true}
-              showText={isExpanded}
-            />
           </div>
         </div>
+        <LogoutButton />
       </div>
-
-      {/* Quick Search Modal */}
-      <QuickSearchModal open={showQuickSearch} onOpenChange={setShowQuickSearch} />
-    </>
+    </div>
   )
 }

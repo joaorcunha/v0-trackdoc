@@ -1,12 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
@@ -19,271 +17,67 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
-import {
-  Tag,
-  CheckCircle,
-  Clock,
-  FileText,
-  Search,
-  Plus,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  LayoutGrid,
-  List,
-} from "lucide-react"
+import { Plus, Search, MoreHorizontal, Edit, Trash2, FileText, ScrollText } from "lucide-react"
 
-/* ---------- TIPOS ---------- */
-type Status = "active" | "inactive"
-
-interface DocumentType {
-  id: number
-  name: string
-  description: string | null
-  prefix: string
-  color: string
-  requiredFields: string[]
-  approvalRequired: boolean
-  retentionPeriod: number
-  status: Status
-  template: string | null
-  documentsCount: number // Assumindo que este campo virá do banco ou será calculado
-}
-
-/* ---------- CONSTANTES ---------- */
-const colorOptions = [
-  { value: "blue", label: "Azul", class: "bg-blue-100 text-blue-800" },
-  { value: "green", label: "Verde", class: "bg-green-100 text-green-800" },
-  { value: "yellow", label: "Amarelo", class: "bg-yellow-100 text-yellow-800" },
-  { value: "purple", label: "Roxo", class: "bg-purple-100 text-purple-800" },
-  { value: "red", label: "Vermelho", class: "bg-red-100 text-red-800" },
-  { value: "gray", label: "Cinza", class: "bg-gray-100 text-gray-800" },
-  { value: "orange", label: "Laranja", class: "bg-orange-100 text-orange-800" },
-  { value: "teal", label: "Verde-azulado", class: "bg-teal-100 text-teal-800" },
-  { value: "cyan", label: "Ciano", class: "bg-cyan-100 text-cyan-800" },
-  { value: "lime", label: "Verde-limão", class: "bg-lime-100 text-lime-800" },
-]
-
-const statusColors: Record<Status, string> = {
-  active: "bg-green-100 text-green-800",
-  inactive: "bg-red-100 text-red-800",
-}
-
-const availableFields = [
-  { key: "title", label: "Título" },
-  { key: "author", label: "Autor" },
-  { key: "version", label: "Versão" },
-  { key: "sector", label: "Setor" },
-  { key: "category", label: "Categoria" },
-  { key: "description", label: "Descrição" },
-  { key: "tags", label: "Tags" },
-  { key: "date", label: "Data" },
-  { key: "period", label: "Período" },
-  { key: "participants", label: "Participantes" },
-  { key: "decisions", label: "Decisões" },
-  { key: "steps", label: "Etapas" },
-]
-
-/* ---------- CONSTANTES ---------- */
+// Dados pré-configurados para Tipos de Documento com documentsCount zerado
 const mockDocumentTypes = [
-  {
-    id: 1,
-    name: "Política",
-    description: "Documentos de políticas corporativas e diretrizes estratégicas",
-    prefix: "POL",
-    color: "blue",
-    requiredFields: ["title", "author", "version", "sector"],
-    approvalRequired: true,
-    retentionPeriod: 60,
-    status: "active",
-    template: null,
-    documentsCount: 18,
-  },
-  {
-    id: 2,
-    name: "Procedimento",
-    description: "Procedimentos operacionais e instruções de trabalho",
-    prefix: "PROC",
-    color: "green",
-    requiredFields: ["title", "author", "version", "steps"],
-    approvalRequired: true,
-    retentionPeriod: 36,
-    status: "active",
-    template: null,
-    documentsCount: 24,
-  },
-  {
-    id: 3,
-    name: "Relatório",
-    description: "Relatórios gerenciais e operacionais",
-    prefix: "REL",
-    color: "yellow",
-    requiredFields: ["title", "author", "date", "period"],
-    approvalRequired: false,
-    retentionPeriod: 24,
-    status: "active",
-    template: null,
-    documentsCount: 32,
-  },
-  {
-    id: 4,
-    name: "Ata",
-    description: "Atas de reuniões e assembleias",
-    prefix: "ATA",
-    color: "purple",
-    requiredFields: ["title", "date", "participants", "decisions"],
-    approvalRequired: false,
-    retentionPeriod: 12,
-    status: "active",
-    template: null,
-    documentsCount: 15,
-  },
-  {
-    id: 5,
-    name: "Manual",
-    description: "Manuais técnicos e de operação",
-    prefix: "MAN",
-    color: "orange",
-    requiredFields: ["title", "author", "version", "category"],
-    approvalRequired: true,
-    retentionPeriod: 48,
-    status: "active",
-    template: null,
-    documentsCount: 8,
-  },
-  {
-    id: 6,
-    name: "Contrato",
-    description: "Contratos comerciais e acordos",
-    prefix: "CTR",
-    color: "red",
-    requiredFields: ["title", "author", "date", "participants"],
-    approvalRequired: true,
-    retentionPeriod: 120,
-    status: "inactive",
-    template: null,
-    documentsCount: 5,
-  },
+  { id: "1", name: "Política", documentsCount: 0 },
+  { id: "2", name: "Procedimento", documentsCount: 0 },
+  { id: "3", name: "Relatório", documentsCount: 0 },
+  { id: "4", name: "Ata", documentsCount: 0 },
 ]
 
-/* ---------- PROPS ---------- */
-interface DocumentTypeManagementProps {
-  initialDocumentTypes?: DocumentType[]
-}
-
-/* ---------- COMPONENTE PRINCIPAL ---------- */
-export default function DocumentTypeManagement({ initialDocumentTypes = [] }: DocumentTypeManagementProps) {
-  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>(mockDocumentTypes)
+export default function DocumentTypeManagement() {
+  const [documentTypes, setDocumentTypes] = useState(mockDocumentTypes)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedType, setSelectedType] = useState<DocumentType | null>(null)
-  const [showTypeModal, setShowTypeModal] = useState(false)
+  const [selectedDocumentType, setSelectedDocumentType] = useState(null)
+  const [showDocumentTypeModal, setShowDocumentTypeModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [typeToDelete, setTypeToDelete] = useState<DocumentType | null>(null)
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list")
-  const [isSaving, setIsSaving] = useState(false)
-  const { toast } = useToast()
-  const router = useRouter()
+  const [documentTypeToDelete, setDocumentTypeToDelete] = useState(null)
 
-  useEffect(() => {
-    setDocumentTypes(mockDocumentTypes)
-  }, [])
-
-  const filteredTypes = documentTypes.filter((type) => type.name?.toLowerCase().includes(searchTerm.toLowerCase()))
-
-  const stats = {
-    total: documentTypes.length,
-    active: documentTypes.filter((t) => t.status === "active").length,
-    inactive: documentTypes.filter((t) => t.status === "inactive").length,
-    totalDocuments: documentTypes.reduce((sum, t) => sum + (t.documentsCount ?? 0), 0),
-  }
-
-  const handleSaveDocumentType = async (typeData: Partial<DocumentType>) => {
-    setIsSaving(true)
-    try {
-      toast({
-        title: "Sucesso!",
-        description: typeData.id
-          ? "Tipo de documento atualizado com sucesso."
-          : "Tipo de documento criado com sucesso.",
-      })
-      setShowTypeModal(false)
-      setSelectedType(null)
-    } catch (error) {
-      toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro ao salvar o tipo de documento. Tente novamente.",
-        variant: "destructive",
-      })
-      console.error("Erro ao salvar tipo de documento:", error)
-    } finally {
-      setIsSaving(false)
+  const handleSaveDocumentType = (documentTypeData) => {
+    if (documentTypeData.id) {
+      // Editar tipo de documento existente
+      setDocumentTypes((prevTypes) =>
+        prevTypes.map((type) => (type.id === documentTypeData.id ? { ...type, ...documentTypeData } : type)),
+      )
+    } else {
+      // Criar novo tipo de documento
+      const newDocumentType = {
+        id: Date.now().toString(), // ID temporário
+        documentsCount: 0, // Novo tipo de documento começa com 0 documentos
+        ...documentTypeData,
+      }
+      setDocumentTypes((prevTypes) => [...prevTypes, newDocumentType])
     }
+    setShowDocumentTypeModal(false)
+    setSelectedDocumentType(null)
   }
 
-  const handleDeleteDocumentType = async () => {
-    if (!typeToDelete) return
-
-    toast({
-      title: "Sucesso!",
-      description: "Tipo de documento excluído com sucesso.",
-    })
+  const handleDeleteDocumentType = () => {
+    setDocumentTypes((prevTypes) => prevTypes.filter((type) => type.id !== documentTypeToDelete.id))
     setShowDeleteConfirm(false)
-    setTypeToDelete(null)
+    setDocumentTypeToDelete(null)
   }
 
-  const handleCloseModal = () => {
-    setShowTypeModal(false)
-    setSelectedType(null)
-  }
+  const filteredDocumentTypes = documentTypes.filter((type) =>
+    type.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tipos de Documento</CardTitle>
-            <Tag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
+      {/* Stats Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total de Tipos de Documento</CardTitle>
+          <ScrollText className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{documentTypes.length}</div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tipos Ativos</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.active}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tipos Inativos</CardTitle>
-            <Clock className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.inactive}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Documentos</CardTitle>
-            <FileText className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalDocuments}</div>
-          </CardContent>
-        </Card>
-      </div>
-
+      {/* Actions Bar */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -298,204 +92,56 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex border rounded-lg p-1">
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className="h-8 px-3 rounded-r-none"
-                >
-                  <List className="h-4 w-4" />
+            <Dialog open={showDocumentTypeModal} onOpenChange={setShowDocumentTypeModal}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setSelectedDocumentType(null)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Tipo
                 </Button>
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="h-8 px-3 rounded-l-none"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </div>
-              <Dialog open={showTypeModal} onOpenChange={setShowTypeModal}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => setSelectedType(null)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Novo Tipo
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>{selectedType ? "Editar Tipo de Documento" : "Novo Tipo de Documento"}</DialogTitle>
-                  </DialogHeader>
-                  <DocumentTypeForm
-                    documentType={selectedType}
-                    onSave={handleSaveDocumentType}
-                    onCancel={() => setShowTypeModal(false)}
-                    isSaving={isSaving}
-                  />
-                </DialogContent>
-              </Dialog>
-            </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>
+                    {selectedDocumentType ? "Editar Tipo de Documento" : "Novo Tipo de Documento"}
+                  </DialogTitle>
+                </DialogHeader>
+                <DocumentTypeForm
+                  documentType={selectedDocumentType}
+                  onSave={handleSaveDocumentType}
+                  onCancel={() => setShowDocumentTypeModal(false)}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </Card>
 
-      {filteredTypes.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="rounded-full bg-muted p-6 mb-4">
-              <FileText className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">
-              {searchTerm ? "Nenhum tipo encontrado" : "Nenhum tipo de documento cadastrado"}
-            </h3>
-            <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-              {searchTerm
-                ? `Não encontramos tipos de documento que correspondam a "${searchTerm}". Tente buscar com outros termos.`
-                : "Comece criando seu primeiro tipo de documento para organizar e categorizar seus documentos."}
-            </p>
-            {!searchTerm && (
-              <Button onClick={() => setShowTypeModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Primeiro Tipo
-              </Button>
-            )}
-            {searchTerm && (
-              <Button variant="outline" onClick={() => setSearchTerm("")}>
-                Limpar Busca
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 lg:col-span-3 xl:grid-cols-3 gap-6">
-          {filteredTypes.map((type) => (
-            <Card key={type.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        colorOptions.find((c) => c.value === type.color)?.class
-                      }`}
-                    >
-                      <FileText className="h-5 w-5" />
-                    </div>
+      {/* Document Types List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tipos de Documento ({filteredDocumentTypes.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredDocumentTypes.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <ScrollText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhum tipo de documento encontrado.</p>
+              </div>
+            ) : (
+              filteredDocumentTypes.map((type) => (
+                <div key={type.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center space-x-4">
+                    <FileText className="h-6 w-6 text-blue-600" />
                     <div>
-                      <CardTitle className="text-lg">{type.name}</CardTitle>
-                      <p className="text-sm text-gray-500">Prefixo: {type.prefix}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={statusColors[type.status]}>
-                      {type.status === "active" ? "Ativo" : "Inativo"}
-                    </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedType(type)
-                            setShowTypeModal(true)
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => {
-                            setTypeToDelete(type)
-                            setShowDeleteConfirm(true)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">{type.description}</p>
-
-                  <div>
-                    <p className="text-sm font-medium mb-2">Campos Obrigatórios:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {type.requiredFields?.map((fieldKey) => {
-                        const field = availableFields.find((f) => f.key === fieldKey)
-                        return (
-                          <Badge key={fieldKey} variant="outline" className="text-xs">
-                            {field ? field.label : fieldKey}
-                          </Badge>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="font-medium">Aprovação:</p>
-                      <p className={type.approvalRequired ? "text-green-600" : "text-gray-500"}>
-                        {type.approvalRequired ? "Obrigatória" : "Não obrigatória"}
+                      <h3 className="font-medium">{type.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        <FileText className="inline-block h-3 w-3 mr-1" />
+                        {type.documentsCount} documentos
                       </p>
                     </div>
-                    <div>
-                      <p className="font-medium">Retenção:</p>
-                      <p className="text-gray-600">{type.retentionPeriod} meses</p>
-                    </div>
                   </div>
-
-                  <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
-                    <span>{type.documentsCount} documentos</span>
-                    <span>Template: {type.template ? "Sim" : "Não"}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="space-y-0">
-              {filteredTypes.map((type, index) => (
-                <div key={type.id} className={`p-4 ${index !== filteredTypes.length - 1 ? "border-b" : ""}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 flex-1">
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          colorOptions.find((c) => c.value === type.color)?.class
-                        }`}
-                      >
-                        <FileText className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-4">
-                          <h3 className="font-medium text-lg">{type.name}</h3>
-                          <Badge className={statusColors[type.status]} variant="secondary">
-                            {type.status === "active" ? "Ativo" : "Inativo"}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center space-x-6 text-sm text-gray-500 mt-1">
-                          <span>Prefixo: {type.prefix}</span>
-                          <span>{type.documentsCount} documentos</span>
-                          <span>Retenção: {type.retentionPeriod} meses</span>
-                          <span className={type.approvalRequired ? "text-green-600" : "text-gray-500"}>
-                            {type.approvalRequired ? "Aprovação obrigatória" : "Sem aprovação"}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">{type.description}</p>
-                      </div>
-                    </div>
+                  <div className="flex items-center space-x-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
@@ -505,19 +151,19 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => {
-                            setSelectedType(type)
-                            setShowTypeModal(true)
+                            setSelectedDocumentType(type)
+                            setShowDocumentTypeModal(true)
                           }}
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="text-red-600"
                           onClick={() => {
-                            setTypeToDelete(type)
+                            setDocumentTypeToDelete(type)
                             setShowDeleteConfirm(true)
                           }}
+                          className="text-red-600"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Excluir
@@ -526,11 +172,11 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
                     </DropdownMenu>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
@@ -538,7 +184,7 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
             <AlertDialogTitle>Tem certeza que deseja excluir este tipo de documento?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação não pode ser desfeita. Isso removerá permanentemente o tipo de documento{" "}
-              <span className="font-semibold">{typeToDelete?.name}</span> e todos os seus dados associados.
+              <span className="font-semibold">{documentTypeToDelete?.name}</span> e todos os seus dados associados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -553,144 +199,32 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
   )
 }
 
-interface DocumentTypeFormProps {
-  documentType: DocumentType | null
-  onSave: (data: Partial<DocumentType>) => void
-  onCancel?: () => void
-  isSaving?: boolean
-}
-
-function DocumentTypeForm({ documentType, onSave, onCancel, isSaving = false }: DocumentTypeFormProps) {
-  const [formData, setFormData] = useState<Partial<DocumentType>>({
+function DocumentTypeForm({ documentType, onSave, onCancel }) {
+  const [formData, setFormData] = useState({
+    id: documentType?.id || null,
     name: documentType?.name || "",
-    description: documentType?.description || "",
-    prefix: documentType?.prefix || "",
-    color: documentType?.color || "blue",
-    requiredFields: documentType?.requiredFields || ["title", "author"],
-    approvalRequired: documentType?.approvalRequired || false,
-    retentionPeriod: documentType?.retentionPeriod || 24,
-    status: documentType?.status || "active",
-    template: documentType?.template || null,
-    ...(documentType && { id: documentType.id }),
   })
 
-  const toggleRequiredField = (fieldKey: string) => {
-    setFormData((prev) => {
-      const currentFields = prev.requiredFields || []
-      return {
-        ...prev,
-        requiredFields: currentFields.includes(fieldKey)
-          ? currentFields.filter((f) => f !== fieldKey)
-          : [...currentFields, fieldKey],
-      }
-    })
+  const handleSave = () => {
+    onSave(formData)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Nome do Tipo</Label>
-          <Input
-            id="name"
-            value={formData.name || ""}
-            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="Ex: Política"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="prefix">Prefixo</Label>
-          <Input
-            id="prefix"
-            value={formData.prefix || ""}
-            onChange={(e) => setFormData((prev) => ({ ...prev, prefix: e.target.value.toUpperCase() }))}
-            placeholder="Ex: POL"
-          />
-        </div>
-      </div>
-
+    <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="description">Descrição</Label>
-        <Textarea
-          id="description"
-          value={formData.description || ""}
-          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-          placeholder="Descreva o propósito deste tipo de documento"
-          rows={3}
+        <Label htmlFor="name">Nome do Tipo de Documento</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+          placeholder="Ex: Política"
         />
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="color">Cor</Label>
-          <Select
-            value={formData.color || "blue"}
-            onValueChange={(value) => setFormData((prev) => ({ ...prev, color: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {colorOptions.map((color) => (
-                <SelectItem key={color.value} value={color.value}>
-                  <div className="flex items-center space-x-2">
-                    <div className={`w-4 h-4 rounded ${color.class}`}></div>
-                    <span>{color.label}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="retention">Período de Retenção (meses)</Label>
-          <Input
-            id="retention"
-            type="number"
-            value={formData.retentionPeriod || 0}
-            onChange={(e) => setFormData((prev) => ({ ...prev, retentionPeriod: Number.parseInt(e.target.value) }))}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <Label>Campos Obrigatórios</Label>
-        <div className="grid grid-cols-3 gap-2">
-          {availableFields.map((field) => (
-            <div key={field.key} className="flex items-center space-x-2">
-              <Switch
-                checked={formData.requiredFields?.includes(field.key) || false}
-                onCheckedChange={() => toggleRequiredField(field.key)}
-              />
-              <Label className="text-sm">{field.label}</Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Switch
-          checked={formData.approvalRequired || false}
-          onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, approvalRequired: checked }))}
-        />
-        <Label>Aprovação obrigatória</Label>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Switch
-          checked={formData.status === "active"}
-          onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, status: checked ? "active" : "inactive" }))}
-        />
-        <Label>Tipo ativo</Label>
-      </div>
-
-      <div className="flex justify-end space-x-2 pt-4 border-t">
-        <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+      <div className="flex justify-end space-x-2 pt-4">
+        <Button variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button onClick={() => onSave(formData)} disabled={isSaving}>
-          {isSaving ? "Salvando..." : "Salvar Tipo"}
-        </Button>
+        <Button onClick={handleSave}>{documentType ? "Salvar Alterações" : "Criar Tipo de Documento"}</Button>
       </div>
     </div>
   )

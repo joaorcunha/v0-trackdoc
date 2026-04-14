@@ -1,169 +1,153 @@
--- =============================================
--- SCRIPT 1: CRIAÇÃO DE TABELAS
--- =============================================
-
--- Tabela de Perfis (Usuários)
-CREATE TABLE IF NOT EXISTS profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    full_name TEXT,
-    avatar_url TEXT,
-    email TEXT UNIQUE,
-    role TEXT DEFAULT 'user', -- 'admin', 'manager', 'user'
-    status TEXT DEFAULT 'active', -- 'active', 'inactive', 'pending'
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Create Users Table
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    last_name TEXT,
+    role TEXT DEFAULT 'viewer' NOT NULL, -- e.g., 'admin', 'editor', 'viewer'
+    department_id UUID REFERENCES departments(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabela de Departamentos
+-- Create Departments Table
 CREATE TABLE IF NOT EXISTS departments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL UNIQUE,
-    short_name TEXT NOT NULL UNIQUE,
+    name TEXT UNIQUE NOT NULL,
     description TEXT,
-    manager_id UUID REFERENCES profiles(id), -- Gerente do departamento
-    color TEXT, -- Cor para identificação visual
-    status TEXT DEFAULT 'active', -- 'active', 'inactive'
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabela de Tipos de Documento
-CREATE TABLE IF NOT EXISTS document_types (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL UNIQUE,
-    description TEXT,
-    prefix TEXT NOT NULL UNIQUE, -- Ex: "POL" para Política, "PROC" para Procedimento
-    color TEXT, -- Cor para identificação visual
-    required_fields TEXT[] DEFAULT '{}', -- Campos obrigatórios (ex: 'title', 'author', 'sector')
-    approval_required BOOLEAN DEFAULT FALSE,
-    retention_period INTEGER DEFAULT 24, -- Período de retenção em meses
-    status TEXT DEFAULT 'active', -- 'active', 'inactive'
-    template_url TEXT, -- URL para um template de documento (opcional)
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Tabela de Categorias de Documento
+-- Create Categories Table
 CREATE TABLE IF NOT EXISTS categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL UNIQUE,
+    name TEXT UNIQUE NOT NULL,
     description TEXT,
-    color TEXT, -- Cor para identificação visual
-    status TEXT DEFAULT 'active', -- 'active', 'inactive'
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabela de Documentos
+-- Create DocumentTypes Table
+CREATE TABLE IF NOT EXISTS document_types (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create ApprovalWorkflows Table
+CREATE TABLE IF NOT EXISTS approval_workflows (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    status TEXT DEFAULT 'active' NOT NULL, -- 'active', 'inactive'
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create WorkflowSteps Table (for complex workflows)
+CREATE TABLE IF NOT EXISTS workflow_steps (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workflow_id UUID REFERENCES approval_workflows(id) ON DELETE CASCADE,
+    step_order INT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    approver_role TEXT, -- e.g., 'manager', 'director', 'specific_user'
+    approver_user_id UUID REFERENCES users(id), -- For specific user approval
+    required BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTIMPTZ DEFAULT NOW(),
+    UNIQUE (workflow_id, step_order)
+);
+
+-- Create Documents Table
 CREATE TABLE IF NOT EXISTS documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    number TEXT UNIQUE, -- Número gerado automaticamente (ex: POL-2023-001)
     title TEXT NOT NULL,
-    author_id UUID REFERENCES profiles(id),
-    department_id UUID REFERENCES departments(id),
+    document_number TEXT UNIQUE NOT NULL,
+    version TEXT DEFAULT '1.0' NOT NULL,
+    content TEXT, -- Or a path to a file storage
+    file_url TEXT, -- URL to the actual document file
+    author_id UUID REFERENCES users(id),
     category_id UUID REFERENCES categories(id),
+    department_id UUID REFERENCES departments(id),
     document_type_id UUID REFERENCES document_types(id),
-    workflow_id UUID, -- Referência ao workflow de aprovação (se houver)
-    version TEXT DEFAULT '1.0',
-    status TEXT DEFAULT 'draft', -- 'draft', 'pending', 'approved', 'rejected', 'archived'
-    description TEXT,
-    tags TEXT[] DEFAULT '{}',
-    file_name TEXT,
-    file_type TEXT,
-    file_size BIGINT,
-    file_url TEXT,
-    current_approval_step INTEGER DEFAULT 0,
-    total_approval_steps INTEGER DEFAULT 0,
-    approved_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    approved_at TIMESTAMP WITH TIME ZONE
+    current_status TEXT DEFAULT 'draft' NOT NULL, -- 'draft', 'pending', 'approved', 'rejected', 'published'
+    current_workflow_id UUID REFERENCES approval_workflows(id),
+    current_workflow_step_id UUID REFERENCES workflow_steps(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    published_at TIMESTAMPTZ
 );
 
--- Tabela de Versões de Documentos
+-- Create DocumentVersions Table
 CREATE TABLE IF NOT EXISTS document_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
-    version TEXT NOT NULL,
-    author_id UUID REFERENCES profiles(id),
-    title TEXT,
-    description TEXT,
-    file_name TEXT,
-    file_type TEXT,
-    file_size BIGINT,
+    version_number TEXT NOT NULL,
+    content TEXT,
     file_url TEXT,
-    changes_summary TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by UUID REFERENCES users(id),
+    UNIQUE (document_id, version_number)
 );
 
--- Tabela de Workflows de Aprovação
-CREATE TABLE IF NOT EXISTS approval_workflows (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL UNIQUE,
-    description TEXT,
-    document_types TEXT[] DEFAULT '{}', -- Tipos de documento que usam este workflow
-    steps JSONB, -- Array de objetos JSON para as etapas de aprovação
-    status TEXT DEFAULT 'active', -- 'active', 'inactive'
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Tabela de Aprovações de Documentos
-CREATE TABLE IF NOT EXISTS document_approvals (
+-- Create ApprovalRequests Table
+CREATE TABLE IF NOT EXISTS approval_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
-    approver_id UUID REFERENCES profiles(id),
-    step_number INTEGER NOT NULL,
-    step_name TEXT,
-    status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
-    comment TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    approved_at TIMESTAMP WITH TIME ZONE
+    workflow_id UUID REFERENCES approval_workflows(id),
+    workflow_step_id UUID REFERENCES workflow_steps(id),
+    approver_id UUID REFERENCES users(id),
+    status TEXT DEFAULT 'pending' NOT NULL, -- 'pending', 'approved', 'rejected'
+    comments TEXT,
+    requested_at TIMESTAMPTZ DEFAULT NOW(),
+    responded_at TIMESTAMPTZ
 );
 
--- Tabela de Favoritos de Documentos
-CREATE TABLE IF NOT EXISTS document_favorites (
+-- Create Comments Table (for document discussions)
+CREATE TABLE IF NOT EXISTS comments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE (document_id, user_id) -- Garante que um usuário só pode favoritar um documento uma vez
+    user_id UUID REFERENCES users(id),
+    parent_comment_id UUID REFERENCES comments(id), -- For threaded comments
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabela de Compartilhamento de Documentos
+-- Create AuditLog Table
+CREATE TABLE IF NOT EXISTS audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    document_id UUID REFERENCES documents(id),
+    action TEXT NOT NULL, -- e.g., 'document_created', 'document_edited', 'user_login', 'document_approved'
+    details JSONB, -- Store additional details about the action
+    ip_address INET,
+    user_agent TEXT,
+    timestamp TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create DocumentShares Table
 CREATE TABLE IF NOT EXISTS document_shares (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
-    shared_by UUID REFERENCES profiles(id),
-    shared_with UUID REFERENCES profiles(id), -- Usuário específico
-    shared_email TEXT, -- Email externo
-    permission TEXT DEFAULT 'read', -- 'read', 'write'
-    expires_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    shared_by UUID REFERENCES users(id),
+    shared_with_user_id UUID REFERENCES users(id),
+    shared_with_email TEXT, -- For external shares
+    permission_level TEXT NOT NULL, -- 'view', 'comment'
+    shared_at TIMESTAMPTZ DEFAULT NOW(),
+    expires_at TIMESTAMPTZ
 );
 
--- Tabela de Auditoria
-CREATE TABLE IF NOT EXISTS audit_logs (
+-- Create DocumentFavorites Table
+CREATE TABLE IF NOT EXISTS document_favorites (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id),
-    action TEXT NOT NULL, -- Ex: 'document_created', 'document_approved', 'user_login'
-    entity_type TEXT, -- Ex: 'document', 'user', 'department'
-    entity_id UUID, -- ID da entidade afetada
-    details JSONB, -- Detalhes adicionais da ação
-    ip_address INET,
-    user_agent TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Tabela de Convites de Usuários
-CREATE TABLE IF NOT EXISTS user_invitations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email TEXT NOT NULL UNIQUE,
-    token TEXT NOT NULL UNIQUE,
-    invited_by UUID REFERENCES profiles(id),
-    role TEXT DEFAULT 'user',
-    status TEXT DEFAULT 'pending', -- 'pending', 'accepted', 'expired'
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    favorited_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (user_id, document_id) -- A user can favorite a document only once
 );

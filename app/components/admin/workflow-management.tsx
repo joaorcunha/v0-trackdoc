@@ -1,14 +1,6 @@
 "use client"
 
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
 import {
   Plus,
   Search,
@@ -34,13 +25,21 @@ import {
   FileText,
   Eye,
   Calendar,
-  LayoutGrid,
-  List,
 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const mockWorkflows = [
   {
-    id: 1,
+    id: "1",
     name: "Aprovação de Políticas",
     description: "Fluxo para aprovação de documentos de política corporativa",
     documentTypes: ["Política", "Procedimento"],
@@ -50,10 +49,10 @@ const mockWorkflows = [
       { id: 3, name: "Compliance", users: ["Ana Costa"], required: false },
     ],
     status: "active",
-    documentsCount: 8,
+    documentsCount: 0,
   },
   {
-    id: 2,
+    id: "2",
     name: "Aprovação de Relatórios",
     description: "Fluxo simplificado para relatórios mensais",
     documentTypes: ["Relatório"],
@@ -62,29 +61,16 @@ const mockWorkflows = [
       { id: 2, name: "Gerente", users: ["Maria Santos"], required: true },
     ],
     status: "active",
-    documentsCount: 12,
+    documentsCount: 0,
   },
   {
-    id: 3,
+    id: "3",
     name: "Aprovação de Atas",
     description: "Fluxo para atas de reunião",
     documentTypes: ["Ata"],
     steps: [{ id: 1, name: "Secretário", users: ["Ana Costa"], required: true }],
-    status: "active",
-    documentsCount: 5,
-  },
-  {
-    id: 4,
-    name: "Aprovação de Contratos",
-    description: "Fluxo para aprovação de contratos comerciais",
-    documentTypes: ["Contrato"],
-    steps: [
-      { id: 1, name: "Jurídico", users: ["Roberto Almeida"], required: true },
-      { id: 2, name: "Financeiro", users: ["Ana Costa"], required: true },
-      { id: 3, name: "Diretoria", users: ["Carlos Oliveira"], required: true },
-    ],
-    status: "active",
-    documentsCount: 6,
+    status: "inactive",
+    documentsCount: 0,
   },
 ]
 
@@ -112,7 +98,6 @@ const documentStatusLabels = {
 
 export default function WorkflowManagement() {
   const [workflows, setWorkflows] = useState(mockWorkflows)
-  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedWorkflow, setSelectedWorkflow] = useState(null)
   const [showWorkflowModal, setShowWorkflowModal] = useState(false)
@@ -121,24 +106,34 @@ export default function WorkflowManagement() {
   const [selectedWorkflowName, setSelectedWorkflowName] = useState("")
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [workflowToDelete, setWorkflowToDelete] = useState(null)
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list")
-  const { toast } = useToast()
 
-  useEffect(() => {
-    setWorkflows(mockWorkflows)
-    setLoading(false)
-  }, [])
+  const handleSaveWorkflow = (workflowData) => {
+    if (workflowData.id) {
+      // Editar fluxo de aprovação existente
+      setWorkflows((prevWorkflows) =>
+        prevWorkflows.map((wf) => (wf.id === workflowData.id ? { ...wf, ...workflowData } : wf)),
+      )
+    } else {
+      // Criar novo fluxo de aprovação
+      const newWorkflow = {
+        id: Date.now().toString(), // ID temporário
+        documentsCount: 0, // Novo fluxo de aprovação começa com 0 documentos
+        ...workflowData,
+      }
+      setWorkflows((prevWorkflows) => [...prevWorkflows, newWorkflow])
+    }
+    setShowWorkflowModal(false)
+    setSelectedWorkflow(null)
+  }
 
-  const loadWorkflows = async () => {
-    setLoading(true)
-    setTimeout(() => {
-      setWorkflows(mockWorkflows)
-      setLoading(false)
-    }, 500)
+  const handleDeleteWorkflow = () => {
+    setWorkflows((prevWorkflows) => prevWorkflows.filter((wf) => wf.id !== workflowToDelete.id))
+    setShowDeleteConfirm(false)
+    setWorkflowToDelete(null)
   }
 
   const filteredWorkflows = workflows.filter((workflow) =>
-    (workflow.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
+    workflow.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const stats = {
@@ -155,57 +150,9 @@ export default function WorkflowManagement() {
     setShowDocumentsModal(true)
   }
 
-  const handleSaveWorkflow = async (workflowData) => {
-    try {
-      if (workflowData.id) {
-        toast({
-          title: "Fluxo atualizado",
-          description: "O fluxo de aprovação foi atualizado com sucesso.",
-        })
-      } else {
-        toast({
-          title: "Fluxo criado",
-          description: "O fluxo de aprovação foi criado com sucesso.",
-        })
-      }
-      setShowWorkflowModal(false)
-      setSelectedWorkflow(null)
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao salvar o fluxo de aprovação.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleDeleteWorkflow = async () => {
-    try {
-      toast({
-        title: "Fluxo excluído",
-        description: "O fluxo de aprovação foi excluído com sucesso.",
-      })
-      setShowDeleteConfirm(false)
-      setWorkflowToDelete(null)
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao excluir o fluxo de aprovação.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -248,6 +195,7 @@ export default function WorkflowManagement() {
         </Card>
       </div>
 
+      {/* Actions Bar */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -262,253 +210,119 @@ export default function WorkflowManagement() {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex border rounded-lg p-1">
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className="h-8 px-3 rounded-r-none"
-                >
-                  <List className="h-4 w-4" />
+            <Dialog open={showWorkflowModal} onOpenChange={setShowWorkflowModal}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setSelectedWorkflow(null)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Fluxo
                 </Button>
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="h-8 px-3 rounded-l-none"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </div>
-              <Dialog open={showWorkflowModal} onOpenChange={setShowWorkflowModal}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => setSelectedWorkflow(null)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Novo Fluxo
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>{selectedWorkflow ? "Editar Fluxo" : "Novo Fluxo de Aprovação"}</DialogTitle>
-                  </DialogHeader>
-                  <WorkflowForm workflow={selectedWorkflow} onSave={handleSaveWorkflow} />
-                </DialogContent>
-              </Dialog>
-            </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{selectedWorkflow ? "Editar Fluxo" : "Novo Fluxo de Aprovação"}</DialogTitle>
+                </DialogHeader>
+                <WorkflowForm
+                  workflow={selectedWorkflow}
+                  onSave={handleSaveWorkflow}
+                  onCancel={() => setShowWorkflowModal(false)}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </Card>
 
-      {viewMode === "grid" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredWorkflows.length === 0 ? (
-            <Card className="lg:col-span-2">
-              <CardContent className="text-center py-12">
-                <GitBranch className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                {searchTerm ? (
-                  <>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum fluxo encontrado</h3>
-                    <p className="text-gray-500 mb-4">
-                      Não encontramos fluxos que correspondam à sua busca "{searchTerm}"
-                    </p>
-                    <Button variant="outline" onClick={() => setSearchTerm("")}>
-                      Limpar busca
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum fluxo de aprovação configurado</h3>
-                    <p className="text-gray-500 mb-4">
-                      Crie seu primeiro fluxo de aprovação para automatizar processos
-                    </p>
-                    <Button onClick={() => setShowWorkflowModal(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Criar Primeiro Fluxo
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            filteredWorkflows.map((workflow) => (
-              <Card key={workflow.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{workflow.name}</CardTitle>
-                      <p className="text-sm text-gray-500 mt-1">{workflow.description}</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={statusColors[workflow.status]}>
-                        {workflow.status === "active" ? "Ativo" : "Inativo"}
-                      </Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedWorkflow(workflow)
-                              setShowWorkflowModal(true)
-                            }}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => {
-                              setWorkflowToDelete(workflow)
-                              setShowDeleteConfirm(true)
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium mb-2">Tipos de Documento:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {workflow.documentTypes.map((type) => (
-                          <Badge key={type} variant="outline">
-                            {type}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-medium mb-2">Fluxo de Aprovação:</p>
-                      <div className="space-y-2">
-                        {workflow.steps.map((step, index) => (
-                          <div key={step.id} className="flex items-center space-x-2">
-                            <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-medium">
-                              {index + 1}
-                            </div>
-                            <span className="text-sm font-medium">{step.name}</span>
-                            {step.required && <Badge variant="secondary">Obrigatório</Badge>}
-                            {index < workflow.steps.length - 1 && <ArrowRight className="h-3 w-3 text-gray-400" />}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
-                      <button
-                        onClick={() => handleShowWorkflowDocuments(workflow)}
-                        className="text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+      {/* Workflows List */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {filteredWorkflows.map((workflow) => (
+          <Card key={workflow.id}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">{workflow.name}</CardTitle>
+                  <p className="text-sm text-gray-500 mt-1">{workflow.description}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge className={statusColors[workflow.status]}>
+                    {workflow.status === "active" ? "Ativo" : "Inativo"}
+                  </Badge>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedWorkflow(workflow)
+                          setShowWorkflowModal(true)
+                        }}
                       >
-                        {workflow.documentsCount} documentos usando este fluxo
-                      </button>
-                      <span>{workflow.steps.length} etapas</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            {filteredWorkflows.length === 0 ? (
-              <div className="text-center py-12">
-                <GitBranch className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                {searchTerm ? (
-                  <>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum fluxo encontrado</h3>
-                    <p className="text-gray-500 mb-4">
-                      Não encontramos fluxos que correspondam à sua busca "{searchTerm}"
-                    </p>
-                    <Button variant="outline" onClick={() => setSearchTerm("")}>
-                      Limpar busca
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhum fluxo de aprovação configurado</h3>
-                    <p className="text-gray-500 mb-4">
-                      Crie seu primeiro fluxo de aprovação para automatizar processos
-                    </p>
-                    <Button onClick={() => setShowWorkflowModal(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Criar Primeiro Fluxo
-                    </Button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-0">
-                {filteredWorkflows.map((workflow, index) => (
-                  <div key={workflow.id} className={`p-4 ${index !== filteredWorkflows.length - 1 ? "border-b" : ""}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 flex-1">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                          <GitBranch className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-4">
-                            <h3 className="font-medium text-lg">{workflow.name}</h3>
-                            <Badge className={statusColors[workflow.status]} variant="secondary">
-                              {workflow.status === "active" ? "Ativo" : "Inativo"}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center space-x-6 text-sm text-gray-500 mt-1">
-                            <span>{workflow.steps.length} etapas</span>
-                            <span>{workflow.documentsCount} documentos</span>
-                            <span>Tipos: {workflow.documentTypes.join(", ")}</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">{workflow.description}</p>
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedWorkflow(workflow)
-                              setShowWorkflowModal(true)
-                            }}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => {
-                              setWorkflowToDelete(workflow)
-                              setShowDeleteConfirm(true)
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar
+                      </DropdownMenuItem>
 
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setWorkflowToDelete(workflow)
+                          setShowDeleteConfirm(true)
+                        }}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium mb-2">Tipos de Documento:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {workflow.documentTypes.map((type) => (
+                      <Badge key={type} variant="outline">
+                        {type}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium mb-2">Fluxo de Aprovação:</p>
+                  <div className="space-y-2">
+                    {workflow.steps.map((step, index) => (
+                      <div key={step.id} className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-medium">
+                          {index + 1}
+                        </div>
+                        <span className="text-sm font-medium">{step.name}</span>
+                        {step.required && <Badge variant="secondary">Obrigatório</Badge>}
+                        {index < workflow.steps.length - 1 && <ArrowRight className="h-3 w-3 text-gray-400" />}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
+                  <button
+                    onClick={() => handleShowWorkflowDocuments(workflow)}
+                    className="text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                  >
+                    {workflow.documentsCount} documentos usando este fluxo
+                  </button>
+                  <span>{workflow.steps.length} etapas</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Documents Modal */}
       <Dialog open={showDocumentsModal} onOpenChange={setShowDocumentsModal}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -559,35 +373,36 @@ export default function WorkflowManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Tem certeza que deseja excluir este fluxo de aprovação?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Isso removerá permanentemente o fluxo{" "}
-              <span className="font-semibold">{workflowToDelete?.name}</span> e todos os seus dados associados.
+              Esta ação não pode ser desfeita. Isso removerá permanentemente o fluxo de aprovação{" "}
+              <span className="font-semibold">{workflowToDelete?.name}</span>. Documentos associados a este fluxo não
+              serão excluídos, mas ficarão sem fluxo de aprovação.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleDeleteWorkflow} className="bg-red-600 hover:bg-red-700">
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteWorkflow} className="bg-red-600 hover:bg-red-700">
               Excluir
-            </Button>
-          </div>
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
   )
 }
 
-function WorkflowForm({ workflow, onSave }) {
+function WorkflowForm({ workflow, onSave, onCancel }) {
   const [formData, setFormData] = useState({
+    id: workflow?.id || null,
     name: workflow?.name || "",
     description: workflow?.description || "",
     documentTypes: workflow?.documentTypes || [],
-    steps: workflow?.steps || [{ id: 1, name: "", users: [], required: true }],
+    steps: workflow?.steps || [{ id: Date.now(), name: "", users: [], required: true }],
     status: workflow?.status || "active",
   })
 
@@ -610,6 +425,10 @@ function WorkflowForm({ workflow, onSave }) {
       ...prev,
       steps: prev.steps.map((step) => (step.id === stepId ? { ...step, [field]: value } : step)),
     }))
+  }
+
+  const handleSave = () => {
+    onSave(formData)
   }
 
   return (
@@ -713,7 +532,6 @@ function WorkflowForm({ workflow, onSave }) {
                             <SelectItem value="maria">Maria Santos</SelectItem>
                             <SelectItem value="carlos">Carlos Oliveira</SelectItem>
                             <SelectItem value="ana">Ana Costa</SelectItem>
-                            <SelectItem value="roberto">Roberto Almeida</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -741,10 +559,10 @@ function WorkflowForm({ workflow, onSave }) {
       </div>
 
       <div className="flex justify-end space-x-2 pt-4 border-t">
-        <Button variant="outline" onClick={onSave}>
+        <Button variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button onClick={() => onSave(formData)}>Salvar Fluxo</Button>
+        <Button onClick={handleSave}>Salvar Fluxo</Button>
       </div>
     </div>
   )

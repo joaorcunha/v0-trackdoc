@@ -2,21 +2,18 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
-import Image from "next/image"
-import { loginUser } from "@/app/actions/login"
+import { Eye, EyeOff, FileText, Loader2, AlertCircle, CheckCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,18 +23,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-
-  useEffect(() => {
-    const signupSuccess = searchParams.get("signup")
-    const email = searchParams.get("email")
-
-    if (signupSuccess === "success") {
-      setSuccess("Conta criada com sucesso! Faça login para continuar.")
-      if (email) {
-        setFormData((prev) => ({ ...prev, email: decodeURIComponent(email) }))
-      }
-    }
-  }, [])
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -71,32 +56,34 @@ export default function LoginPage() {
 
     setIsLoading(true)
     setError("")
-    setSuccess("")
 
     try {
-      console.log("[v0] Tentando fazer login...")
+      // Simular chamada de API
+      await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      const result = await loginUser({
-        email: formData.email,
-        password: formData.password,
-      })
+      // Verificar credenciais (simulado)
+      if (formData.email === "admin@trackdoc.com" && formData.password === "123456") {
+        setSuccess("Login realizado com sucesso!")
 
-      if (!result.success) {
-        setError(result.error || "Erro ao fazer login")
-        return
+        // Salvar dados de autenticação (simulado)
+        localStorage.setItem("isAuthenticated", "true")
+        localStorage.setItem("userEmail", formData.email)
+        localStorage.setItem("userName", "João Silva")
+        localStorage.setItem("userRole", "Administrador")
+
+        if (formData.rememberMe) {
+          localStorage.setItem("rememberMe", "true")
+        }
+
+        // Redirecionar para o dashboard
+        setTimeout(() => {
+          router.push("/")
+        }, 1000)
+      } else {
+        setError("Email ou senha incorretos")
       }
-
-      console.log("[v0] Login bem-sucedido, redirecionando...")
-      setSuccess("Login realizado com sucesso!")
-
-      localStorage.setItem("isAuthenticated", "true")
-
-      // Force router to refresh and redirect
-      router.refresh()
-      router.push("/")
-    } catch (err: any) {
-      console.error("[v0] Erro no login:", err)
-      setError("Erro ao fazer login. Tente novamente.")
+    } catch (err) {
+      setError("Erro interno do servidor. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -107,30 +94,20 @@ export default function LoginPage() {
     alert("Funcionalidade de recuperação de senha será implementada em breve.")
   }
 
-  const handleSignupClick = () => {
-    router.push("/signup")
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo e Header */}
-        <div className="text-center mb-8 py-0">
-          <div className="flex justify-center mb-0.5">
-            <Image
-              src="/images/logo-trackdoc-horizontal.png"
-              alt="Trackdoc"
-              width={200}
-              height={57}
-              priority
-              className="h-auto w-auto max-w-[200px]"
-            />
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
+            <FileText className="h-8 w-8 text-white" />
           </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">TrackDoc</h1>
           <p className="text-gray-600">Gestão de Documentos</p>
         </div>
 
         {/* Card de Login */}
-        <Card className="shadow-xl border-0 bg-white">
+        <Card className="shadow-xl border-0">
           <CardHeader className="space-y-1 pb-6">
             <CardTitle className="text-2xl font-bold text-center">Entrar na sua conta</CardTitle>
             <CardDescription className="text-center">Digite suas credenciais para acessar o sistema</CardDescription>
@@ -233,18 +210,24 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600 mb-3">Não tem uma conta?</p>
-              <Button variant="outline" className="w-full bg-transparent" type="button" onClick={handleSignupClick}>
-                Criar conta grátis
-              </Button>
+            {/* Credenciais de Demonstração */}
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm font-medium text-gray-700 mb-2">Credenciais de demonstração:</p>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>
+                  <strong>Email:</strong> admin@trackdoc.com
+                </p>
+                <p>
+                  <strong>Senha:</strong> 123456
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500">
-          <p>© 2025 TrackDoc. Todos os direitos reservados.</p>
+          <p>© 2024 TrackDoc. Todos os direitos reservados.</p>
           <div className="flex justify-center space-x-4 mt-2">
             <Button variant="link" className="px-0 text-gray-500 hover:text-gray-700">
               Termos de Uso

@@ -7,18 +7,18 @@ import AuthGuard from "./components/auth-guard"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "TrackDoc - Sistema de Gestão de Documentos",
-  description: "Plataforma moderna para gestão interna de documentos corporativos",
+  title: "Trackdoc - Plataforma de Documentos Corporativos",
+  description: "Gerencie seus documentos corporativos de forma eficiente e segura.",
     generator: 'v0.app'
 }
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode
-}) {
+}>) {
   return (
-    <html lang="pt-BR">
+    <html lang="en">
       <body className={inter.className}>
         <AuthGuard>{children}</AuthGuard>
       </body>

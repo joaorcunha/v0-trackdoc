@@ -11,7 +11,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import {
   Search,
   FileText,
+  Folder,
   Users,
+  Settings,
   GitBranch,
   Building2,
   Clock,
@@ -173,11 +175,11 @@ const popularSearches = [
 ]
 
 interface QuickSearchModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  isOpen: boolean
+  onClose: () => void
 }
 
-export default function QuickSearchModal({ open, onOpenChange }: QuickSearchModalProps) {
+export default function QuickSearchModal({ isOpen, onClose }: QuickSearchModalProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("all")
   const [searchResults, setSearchResults] = useState({
@@ -188,6 +190,17 @@ export default function QuickSearchModal({ open, onOpenChange }: QuickSearchModa
   })
   const [isSearching, setIsSearching] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+
+  const mockSearchResults = [
+    { id: 1, type: "document", name: "Política de Privacidade", icon: FileText, url: "#" },
+    { id: 2, type: "document", name: "Manual do Colaborador", icon: FileText, url: "#" },
+    { id: 3, type: "category", name: "Recursos Humanos", icon: Folder, url: "#" },
+    { id: 4, type: "user", name: "João Silva", icon: Users, url: "#" },
+    { id: 5, type: "document", name: "Relatório Financeiro Q3", icon: FileText, url: "#" },
+    { id: 6, type: "setting", name: "Gerenciar Usuários", icon: Settings, url: "#" },
+  ]
+
+  const filteredResults = mockSearchResults.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   // Simular busca
   useEffect(() => {
@@ -259,12 +272,12 @@ export default function QuickSearchModal({ open, onOpenChange }: QuickSearchModa
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 sm:max-w-[500px]">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center space-x-2">
             <Search className="h-5 w-5" />
-            <span>Busca Rápida</span>
+            <span>Pesquisa Rápida</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -274,7 +287,7 @@ export default function QuickSearchModal({ open, onOpenChange }: QuickSearchModa
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Buscar documentos, usuários, fluxos..."
+                placeholder="Buscar documentos, usuários, configurações..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-20 h-12 text-lg"
@@ -407,6 +420,32 @@ export default function QuickSearchModal({ open, onOpenChange }: QuickSearchModa
                   )}
                 </div>
               </Tabs>
+            </div>
+          )}
+
+          {/* Filtered Results */}
+          {!searchTerm && (
+            <div className="mt-4 max-h-60 overflow-y-auto">
+              {filteredResults.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredResults.map((item) => (
+                    <a
+                      key={item.id}
+                      href={item.url}
+                      className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer"
+                      onClick={onClose}
+                    >
+                      <item.icon className="h-5 w-5 text-gray-600" />
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-gray-500 capitalize">{item.type}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500">Nenhum resultado encontrado.</p>
+              )}
             </div>
           )}
         </div>
