@@ -6,6 +6,9 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
+// MODO DE TESTES: Desabilita autenticação
+const TESTING_MODE = true
+
 interface AuthGuardProps {
   children: React.ReactNode
 }
@@ -17,31 +20,30 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    console.log("[v0] AuthGuard: Verificando autenticação para rota:", pathname)
+    // Em modo de testes, permite acesso direto sem verificação
+    if (TESTING_MODE) {
+      setIsAuthenticated(true)
+      setIsLoading(false)
+      return
+    }
 
     const checkAuth = () => {
       const publicRoutes = ["/login", "/signup", "/signup/success"]
       const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
 
-      console.log("[v0] AuthGuard: É rota pública?", isPublicRoute)
-
       // Verificar se está em uma rota pública
       if (isPublicRoute) {
-        console.log("[v0] AuthGuard: Rota pública, permitindo acesso")
         setIsLoading(false)
         return
       }
 
       // Verificar autenticação
       const authStatus = localStorage.getItem("isAuthenticated")
-      console.log("[v0] AuthGuard: Status de autenticação no localStorage:", authStatus)
 
       if (authStatus === "true") {
-        console.log("[v0] AuthGuard: Usuário autenticado, permitindo acesso")
         setIsAuthenticated(true)
         setIsLoading(false)
       } else {
-        console.log("[v0] AuthGuard: Usuário não autenticado, redirecionando para login")
         setIsLoading(false)
         // Redirecionar para login se não autenticado
         router.push("/login")
@@ -50,6 +52,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
     checkAuth()
   }, [pathname, router])
+
+  // Em modo de testes, renderiza diretamente
+  if (TESTING_MODE) {
+    return <>{children}</>
+  }
 
   // Mostrar loading enquanto verifica autenticação
   if (isLoading) {

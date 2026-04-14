@@ -1,10 +1,18 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
+// MODO DE TESTES: Desabilita autenticação
+const TESTING_MODE = true
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
+
+  // Em modo de testes, permite acesso a todas as rotas sem autenticação
+  if (TESTING_MODE) {
+    return supabaseResponse
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
