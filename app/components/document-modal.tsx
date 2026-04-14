@@ -27,8 +27,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react"
-// Supabase desabilitado para fase de testes
-// import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+// import { createClient } from "@/lib/supabase/client" // Desabilitado para fase de testes
 
 interface DocumentModalProps {
   open: boolean
@@ -92,7 +91,7 @@ const fileTypes = [
 ]
 
 export default function DocumentModal({ open, onOpenChange, document, mode = "create", onSave }: DocumentModalProps) {
-  // const supabase = createClientComponentClient() // Desabilitado para fase de testes
+  // const supabase = createClient() // Desabilitado para fase de testes
 
   const [formData, setFormData] = useState({
     number: "",
@@ -131,11 +130,10 @@ export default function DocumentModal({ open, onOpenChange, document, mode = "cr
 
   useEffect(() => {
     if (open) {
-      // MODO DE TESTES: Usando dados mock em vez de queries ao Supabase
-      // para evitar erros de recursão RLS durante a fase de testes
+      // MODO DE TESTES: Usando dados mock para evitar erros de RLS
       const mockSectors = [
-        { name: "TI", shortName: "TI" },
-        { name: "RH", shortName: "RH" },
+        { name: "Tecnologia da Informação", shortName: "TI" },
+        { name: "Recursos Humanos", shortName: "RH" },
         { name: "Financeiro", shortName: "FIN" },
         { name: "Vendas", shortName: "VEN" },
         { name: "Marketing", shortName: "MKT" },
