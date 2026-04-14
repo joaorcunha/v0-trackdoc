@@ -27,7 +27,8 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+// Supabase desabilitado para fase de testes
+// import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface DocumentModalProps {
   open: boolean
@@ -91,7 +92,7 @@ const fileTypes = [
 ]
 
 export default function DocumentModal({ open, onOpenChange, document, mode = "create", onSave }: DocumentModalProps) {
-  const supabase = createClient()
+  // const supabase = createClientComponentClient() // Desabilitado para fase de testes
 
   const [formData, setFormData] = useState({
     number: "",
@@ -130,48 +131,41 @@ export default function DocumentModal({ open, onOpenChange, document, mode = "cr
 
   useEffect(() => {
     if (open) {
-      const fetchDropdownData = async () => {
-        // Fetch Departments
-        const { data: departmentsData, error: departmentsError } = await supabase
-          .from("departments")
-          .select("name, short_name, status")
-          .eq("status", "active")
-        if (departmentsError) {
-          console.error("Erro ao buscar departamentos:", departmentsError)
-        } else {
-          setAvailableSectors(
-            departmentsData.map((dept) => ({
-              name: dept.name,
-              shortName: dept.short_name,
-            })),
-          )
-        }
-
-        // Fetch Document Types
-        const { data: documentTypesData, error: documentTypesError } = await supabase
-          .from("document_types")
-          .select("id, name, prefix, status")
-          .eq("status", "active")
-        if (documentTypesError) {
-          console.error("Erro ao buscar tipos de documento:", documentTypesError)
-        } else {
-          setAvailableDocumentTypes(documentTypesData)
-        }
-
-        // Fetch Categories
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from("categories")
-          .select("id, name, description, color, status")
-          .eq("status", "active")
-        if (categoriesError) {
-          console.error("Erro ao buscar categorias:", categoriesError)
-        } else {
-          setAvailableCategories(categoriesData)
-        }
-      }
-      fetchDropdownData()
+      // MODO DE TESTES: Usando dados mock em vez de queries ao Supabase
+      // para evitar erros de recursão RLS durante a fase de testes
+      const mockSectors = [
+        { name: "TI", shortName: "TI" },
+        { name: "RH", shortName: "RH" },
+        { name: "Financeiro", shortName: "FIN" },
+        { name: "Vendas", shortName: "VEN" },
+        { name: "Marketing", shortName: "MKT" },
+        { name: "Operações", shortName: "OPS" },
+        { name: "Jurídico", shortName: "JUR" },
+        { name: "Diretoria", shortName: "DIR" },
+      ]
+      
+      const mockDocumentTypes = [
+        { id: 1, name: "Política", prefix: "POL", status: "active" },
+        { id: 2, name: "Procedimento", prefix: "PROC", status: "active" },
+        { id: 3, name: "Manual", prefix: "MAN", status: "active" },
+        { id: 4, name: "Relatório", prefix: "REL", status: "active" },
+        { id: 5, name: "Ata", prefix: "ATA", status: "active" },
+        { id: 6, name: "Plano", prefix: "PLAN", status: "active" },
+        { id: 7, name: "Orçamento", prefix: "ORC", status: "active" },
+      ]
+      
+      const mockCategories = [
+        { id: 1, name: "Gestão", description: "Documentos de gestão", color: "#3B82F6", status: "active" },
+        { id: 2, name: "Compliance", description: "Documentos de compliance", color: "#10B981", status: "active" },
+        { id: 3, name: "Operacional", description: "Documentos operacionais", color: "#F59E0B", status: "active" },
+        { id: 4, name: "Estratégico", description: "Documentos estratégicos", color: "#8B5CF6", status: "active" },
+      ]
+      
+      setAvailableSectors(mockSectors)
+      setAvailableDocumentTypes(mockDocumentTypes)
+      setAvailableCategories(mockCategories)
     }
-  }, [open, supabase])
+  }, [open])
 
   useEffect(() => {
     setFileWasRemoved(false)
