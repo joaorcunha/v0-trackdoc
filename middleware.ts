@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-// MODO DE TESTES: Desabilita autenticação
-const TESTING_MODE = true
+// MODO DE PRODUÇÃO: Autenticação habilitada
+const TESTING_MODE = false
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
   // Redirect to login if not authenticated and trying to access protected route
-  if (!user && !isPublicRoute && request.nextUrl.pathname !== "/") {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)
