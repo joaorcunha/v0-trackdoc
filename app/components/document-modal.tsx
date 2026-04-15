@@ -27,7 +27,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react"
-// import { createClient } from "@/lib/supabase/client" // Desabilitado para fase de testes
+import { createClient } from "@/lib/supabase/client"
 
 interface DocumentModalProps {
   open: boolean
@@ -91,7 +91,7 @@ const fileTypes = [
 ]
 
 export default function DocumentModal({ open, onOpenChange, document, mode = "create", onSave }: DocumentModalProps) {
-  // const supabase = createClient() // Desabilitado para fase de testes
+  const supabase = createClient()
 
   const [formData, setFormData] = useState({
     number: "",
@@ -130,40 +130,48 @@ export default function DocumentModal({ open, onOpenChange, document, mode = "cr
 
   useEffect(() => {
     if (open) {
-      // MODO DE TESTES: Usando dados mock para evitar erros de RLS
-      const mockSectors = [
-        { name: "Tecnologia da Informação", shortName: "TI" },
-        { name: "Recursos Humanos", shortName: "RH" },
-        { name: "Financeiro", shortName: "FIN" },
-        { name: "Vendas", shortName: "VEN" },
-        { name: "Marketing", shortName: "MKT" },
-        { name: "Operações", shortName: "OPS" },
-        { name: "Jurídico", shortName: "JUR" },
-        { name: "Diretoria", shortName: "DIR" },
-      ]
-      
-      const mockDocumentTypes = [
-        { id: 1, name: "Política", prefix: "POL", status: "active" },
-        { id: 2, name: "Procedimento", prefix: "PROC", status: "active" },
-        { id: 3, name: "Manual", prefix: "MAN", status: "active" },
-        { id: 4, name: "Relatório", prefix: "REL", status: "active" },
-        { id: 5, name: "Ata", prefix: "ATA", status: "active" },
-        { id: 6, name: "Plano", prefix: "PLAN", status: "active" },
-        { id: 7, name: "Orçamento", prefix: "ORC", status: "active" },
-      ]
-      
-      const mockCategories = [
-        { id: 1, name: "Gestão", description: "Documentos de gestão", color: "#3B82F6", status: "active" },
-        { id: 2, name: "Compliance", description: "Documentos de compliance", color: "#10B981", status: "active" },
-        { id: 3, name: "Operacional", description: "Documentos operacionais", color: "#F59E0B", status: "active" },
-        { id: 4, name: "Estratégico", description: "Documentos estratégicos", color: "#8B5CF6", status: "active" },
-      ]
-      
-      setAvailableSectors(mockSectors)
-      setAvailableDocumentTypes(mockDocumentTypes)
-      setAvailableCategories(mockCategories)
+      const fetchDropdownData = async () => {
+        // Fetch Departments
+        const { data: departmentsData, error: departmentsError } = await supabase
+          .from("departments")
+          .select("name, short_name, status")
+          .eq("status", "active")
+        if (departmentsError) {
+          console.error("Erro ao buscar departamentos:", departmentsError)
+        } else {
+          setAvailableSectors(
+            departmentsData.map((dept) => ({
+              name: dept.name,
+              shortName: dept.short_name,
+            })),
+          )
+        }
+
+        // Fetch Document Types
+        const { data: documentTypesData, error: documentTypesError } = await supabase
+          .from("document_types")
+          .select("id, name, prefix, status")
+          .eq("status", "active")
+        if (documentTypesError) {
+          console.error("Erro ao buscar tipos de documento:", documentTypesError)
+        } else {
+          setAvailableDocumentTypes(documentTypesData)
+        }
+
+        // Fetch Categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from("categories")
+          .select("id, name, description, color, status")
+          .eq("status", "active")
+        if (categoriesError) {
+          console.error("Erro ao buscar categorias:", categoriesError)
+        } else {
+          setAvailableCategories(categoriesData)
+        }
+      }
+      fetchDropdownData()
     }
-  }, [open])
+  }, [open, supabase])
 
   useEffect(() => {
     setFileWasRemoved(false)
