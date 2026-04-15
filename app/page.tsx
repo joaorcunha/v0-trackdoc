@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { getDocuments, getDashboardStats, getDocumentsByStatus, getDocumentsByDepartment, getRecentActivity } from "./admin/actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -54,189 +55,7 @@ import DocumentAccessReport from "./components/admin/document-access-report"
 import DocumentCreationSelector from "./components/document-creation-selector"
 import DocumentEditor from "./components/document-editor" // Imported DocumentEditor
 
-const mockDocuments = [
-  {
-    id: 1,
-    title: "Política de Segurança da Informação",
-    number: "POL-TI-001",
-    version: "2.0",
-    author: "Carlos Silva",
-    sector: "TI",
-    status: "approved",
-    fileType: "pdf",
-    fileName: "politica_seguranca_v2.pdf",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-03-10",
-    approvals: 3,
-    totalApprovals: 3,
-  },
-  {
-    id: 2,
-    title: "Procedimento de Onboarding",
-    number: "PROC-RH-012",
-    version: "1.5",
-    author: "Ana Santos",
-    sector: "RH",
-    status: "approved",
-    fileType: "word",
-    fileName: "onboarding_procedimento.docx",
-    createdAt: "2024-02-20",
-    updatedAt: "2024-03-15",
-    approvals: 2,
-    totalApprovals: 2,
-  },
-  {
-    id: 3,
-    title: "Manual de Vendas - Q1 2024",
-    number: "MAN-VEN-008",
-    version: "3.2",
-    author: "Roberto Lima",
-    sector: "Vendas",
-    status: "pending",
-    fileType: "powerpoint",
-    fileName: "manual_vendas_q1.pptx",
-    createdAt: "2024-03-01",
-    updatedAt: "2024-03-20",
-    approvals: 1,
-    totalApprovals: 2,
-  },
-  {
-    id: 4,
-    title: "Relatório Financeiro Anual 2023",
-    number: "REL-FIN-045",
-    version: "1.0",
-    author: "Mariana Costa",
-    sector: "Financeiro",
-    status: "approved",
-    fileType: "excel",
-    fileName: "relatorio_financeiro_2023.xlsx",
-    createdAt: "2024-01-05",
-    updatedAt: "2024-01-30",
-    approvals: 3,
-    totalApprovals: 3,
-  },
-  {
-    id: 5,
-    title: "Política de Trabalho Remoto",
-    number: "POL-RH-023",
-    version: "1.0",
-    author: "Ana Santos",
-    sector: "RH",
-    status: "draft",
-    fileType: "word",
-    fileName: "politica_trabalho_remoto.docx",
-    createdAt: "2024-03-18",
-    updatedAt: "2024-03-22",
-    approvals: 0,
-    totalApprovals: 2,
-  },
-  {
-    id: 6,
-    title: "Ata de Reunião - Diretoria Março",
-    number: "ATA-DIR-015",
-    version: "1.0",
-    author: "Fernando Oliveira",
-    sector: "Diretoria",
-    status: "approved",
-    fileType: "pdf",
-    fileName: "ata_diretoria_marco.pdf",
-    createdAt: "2024-03-05",
-    updatedAt: "2024-03-08",
-    approvals: 4,
-    totalApprovals: 4,
-  },
-  {
-    id: 7,
-    title: "Procedimento de Backup de Dados",
-    number: "PROC-TI-034",
-    version: "2.1",
-    author: "Carlos Silva",
-    sector: "TI",
-    status: "pending",
-    fileType: "pdf",
-    fileName: "procedimento_backup.pdf",
-    createdAt: "2024-03-10",
-    updatedAt: "2024-03-21",
-    approvals: 2,
-    totalApprovals: 3,
-  },
-  {
-    id: 8,
-    title: "Plano de Metas - Vendas 2024",
-    number: "PLAN-VEN-019",
-    version: "1.0",
-    author: "Roberto Lima",
-    sector: "Vendas",
-    status: "approved",
-    fileType: "powerpoint",
-    fileName: "plano_metas_2024.pptx",
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-25",
-    approvals: 2,
-    totalApprovals: 2,
-  },
-  {
-    id: 9,
-    title: "Política de Férias e Licenças",
-    number: "POL-RH-018",
-    version: "3.0",
-    author: "Ana Santos",
-    sector: "RH",
-    status: "approved",
-    fileType: "word",
-    fileName: "politica_ferias.docx",
-    createdAt: "2024-02-01",
-    updatedAt: "2024-02-15",
-    approvals: 2,
-    totalApprovals: 2,
-  },
-  {
-    id: 10,
-    title: "Orçamento Anual 2024",
-    number: "ORC-FIN-002",
-    version: "1.2",
-    author: "Mariana Costa",
-    sector: "Financeiro",
-    status: "draft",
-    fileType: "excel",
-    fileName: "orcamento_2024.xlsx",
-    createdAt: "2024-03-15",
-    updatedAt: "2024-03-23",
-    approvals: 0,
-    totalApprovals: 3,
-  },
-  {
-    id: 11,
-    title: "Manual de Boas Práticas de TI",
-    number: "MAN-TI-007",
-    version: "1.8",
-    author: "Carlos Silva",
-    sector: "TI",
-    status: "approved",
-    fileType: "pdf",
-    fileName: "manual_boas_praticas.pdf",
-    createdAt: "2024-02-10",
-    updatedAt: "2024-03-05",
-    approvals: 3,
-    totalApprovals: 3,
-  },
-  {
-    id: 12,
-    title: "Estratégia Comercial Q2 2024",
-    number: "EST-VEN-011",
-    version: "1.0",
-    author: "Roberto Lima",
-    sector: "Vendas",
-    status: "pending",
-    fileType: "powerpoint",
-    fileName: "estrategia_q2.pptx",
-    createdAt: "2024-03-20",
-    updatedAt: "2024-03-24",
-    approvals: 0,
-    totalApprovals: 2,
-  },
-]
-
+// Dados de evolução mensal (estático por enquanto - pode ser calculado do banco futuramente)
 const monthlyEvolutionData = [
   { month: "Set", TI: 12, Vendas: 8, RH: 6, Financeiro: 4, Diretoria: 3 },
   { month: "Out", TI: 15, Vendas: 10, RH: 8, Financeiro: 5, Diretoria: 4 },
@@ -245,63 +64,6 @@ const monthlyEvolutionData = [
   { month: "Jan", TI: 20, Vendas: 15, RH: 10, Financeiro: 7, Diretoria: 5 },
   { month: "Fev", TI: 22, Vendas: 18, RH: 12, Financeiro: 9, Diretoria: 7 },
   { month: "Mar", TI: 25, Vendas: 20, RH: 14, Financeiro: 10, Diretoria: 8 },
-]
-
-const recentActivity = [
-  {
-    id: 1,
-    action: "Documento aprovado",
-    document: "Política de Segurança da Informação",
-    user: "Carlos Silva",
-    time: "Há 2 horas",
-    icon: CheckCircle,
-    color: "text-green-600",
-  },
-  {
-    id: 2,
-    action: "Novo documento criado",
-    document: "Estratégia Comercial Q2 2024",
-    user: "Roberto Lima",
-    time: "Há 4 horas",
-    icon: FileText,
-    color: "text-blue-600",
-  },
-  {
-    id: 3,
-    action: "Documento enviado para aprovação",
-    document: "Procedimento de Backup de Dados",
-    user: "Carlos Silva",
-    time: "Há 6 horas",
-    icon: Clock,
-    color: "text-yellow-600",
-  },
-  {
-    id: 4,
-    action: "Documento editado",
-    document: "Orçamento Anual 2024",
-    user: "Mariana Costa",
-    time: "Há 8 horas",
-    icon: Edit,
-    color: "text-gray-600",
-  },
-  {
-    id: 5,
-    action: "Documento aprovado",
-    document: "Plano de Metas - Vendas 2024",
-    user: "Roberto Lima",
-    time: "Há 1 dia",
-    icon: CheckCircle,
-    color: "text-green-600",
-  },
-]
-
-const sectorDistribution = [
-  { sector: "TI", count: 25, percentage: 31, color: "#3b82f6" },
-  { sector: "Vendas", count: 20, percentage: 25, color: "#10b981" },
-  { sector: "RH", count: 14, percentage: 17, color: "#f59e0b" },
-  { sector: "Financeiro", count: 10, percentage: 12, color: "#8b5cf6" },
-  { sector: "Diretoria", count: 8, percentage: 10, color: "#ef4444" },
-  { sector: "Outros", count: 4, percentage: 5, color: "#6b7280" },
 ]
 
 // Função para obter ícone do formato do arquivo
@@ -321,12 +83,64 @@ const getFileTypeIcon = (fileType: string) => {
 }
 
 // Cores para cada departamento
-const departmentColors = {
+const departmentColors: Record<string, string> = {
   TI: "#3b82f6",
   Vendas: "#10b981",
   RH: "#f59e0b",
   Financeiro: "#8b5cf6",
   Diretoria: "#ef4444",
+  VEN: "#10b981",
+  FIN: "#8b5cf6",
+  DIR: "#ef4444",
+  OPS: "#06b6d4",
+  JUR: "#ec4899",
+  MKT: "#84cc16",
+}
+
+// Funções auxiliares
+const getActionLabel = (action: string) => {
+  const labels: Record<string, string> = {
+    document_created: "Documento criado",
+    document_updated: "Documento atualizado",
+    document_approved: "Documento aprovado",
+    document_rejected: "Documento rejeitado",
+    document_viewed: "Documento visualizado",
+    document_downloaded: "Documento baixado",
+    user_login: "Login realizado",
+    user_logout: "Logout realizado",
+  }
+  return labels[action] || action
+}
+
+const getActionIcon = (action: string) => {
+  if (action.includes("approved")) return CheckCircle
+  if (action.includes("created")) return FileText
+  if (action.includes("updated") || action.includes("edited")) return Edit
+  if (action.includes("rejected")) return AlertCircle
+  return Clock
+}
+
+const getActionColor = (action: string) => {
+  if (action.includes("approved")) return "text-green-600"
+  if (action.includes("created")) return "text-blue-600"
+  if (action.includes("rejected")) return "text-red-600"
+  if (action.includes("updated") || action.includes("edited")) return "text-gray-600"
+  return "text-yellow-600"
+}
+
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMins < 1) return "Agora"
+  if (diffMins < 60) return `Há ${diffMins} min`
+  if (diffHours < 24) return `Há ${diffHours}h`
+  if (diffDays < 7) return `Há ${diffDays} dia${diffDays > 1 ? "s" : ""}`
+  return date.toLocaleDateString("pt-BR")
 }
 
 const statusColors = {
@@ -344,11 +158,15 @@ const statusLabels = {
 }
 
 export default function DocumentManagementPlatform() {
-  const [documents, setDocuments] = useState(mockDocuments)
+  const [documents, setDocuments] = useState<any[]>([])
+  const [recentActivityData, setRecentActivityData] = useState<any[]>([])
+  const [sectorDistribution, setSectorDistribution] = useState<any[]>([])
+  const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0, draft: 0 })
+  const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [sectorFilter, setSectorFilter] = useState("all")
-  const [selectedDocument, setSelectedDocument] = useState(null)
+  const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [showDocumentModal, setShowDocumentModal] = useState(false)
   const [showDocumentPreview, setShowDocumentPreview] = useState(false)
   const [showApprovalModal, setShowApprovalModal] = useState(false)
@@ -357,19 +175,80 @@ export default function DocumentManagementPlatform() {
   const [adminView, setAdminView] = useState("overview")
   const [chartAreaFilter, setChartAreaFilter] = useState("all")
   const [chartTypeFilter, setChartTypeFilter] = useState("all")
-  const [documentModalMode, setDocumentModalMode] = useState("view") // 'view', 'edit', 'new-version'
+  const [documentModalMode, setDocumentModalMode] = useState("view")
   const [showCreationSelector, setShowCreationSelector] = useState(false)
-
-  // Estados para o modal de documentos por categoria
   const [showDocumentListModal, setShowDocumentListModal] = useState(false)
-  const [documentListFilter, setDocumentListFilter] = useState("all") // 'all', 'approved', 'pending', 'draft'
+  const [documentListFilter, setDocumentListFilter] = useState("all")
   const [documentListTitle, setDocumentListTitle] = useState("")
 
-  // Dados fictícios removidos para testes em produção - REPLACED BY mockDocuments ABOVE
-  // const mockDocuments = []
+  // Buscar dados do Supabase
+  const fetchData = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const [docsData, statsData, statusData, deptData, activityData] = await Promise.all([
+        getDocuments(),
+        getDashboardStats(),
+        getDocumentsByStatus(),
+        getDocumentsByDepartment(),
+        getRecentActivity(5),
+      ])
 
-  // Dados fictícios removidos para testes em produção - REPLACED BY monthlyEvolutionData ABOVE
-  // const monthlyEvolutionData = []
+      // Mapear documentos para o formato esperado
+      const mappedDocs = docsData.map((doc: any) => ({
+        id: doc.id,
+        title: doc.title,
+        number: doc.document_number,
+        version: doc.version,
+        author: doc.author?.full_name || "Desconhecido",
+        sector: doc.department?.short_name || doc.department?.name || "N/A",
+        status: doc.status,
+        fileType: doc.file_type || "pdf",
+        fileName: doc.file_name,
+        createdAt: doc.created_at?.split("T")[0],
+        updatedAt: doc.updated_at?.split("T")[0],
+        approvals: 0,
+        totalApprovals: 0,
+      }))
+
+      setDocuments(mappedDocs)
+      setStats({
+        total: statsData.totalDocuments,
+        approved: statusData.approved,
+        pending: statusData.pending,
+        draft: statusData.draft,
+      })
+
+      // Mapear distribuição por setor
+      const totalDocs = deptData.reduce((sum: number, d: any) => sum + d.count, 0)
+      setSectorDistribution(
+        deptData.map((d: any) => ({
+          sector: d.name,
+          count: d.count,
+          percentage: totalDocs > 0 ? Math.round((d.count / totalDocs) * 100) : 0,
+          color: departmentColors[d.name as keyof typeof departmentColors] || "#6b7280",
+        }))
+      )
+
+      // Mapear atividade recente
+      setRecentActivityData(
+        activityData.map((a: any) => ({
+          id: a.id,
+          action: getActionLabel(a.action),
+          document: a.details || "",
+          user: a.user?.full_name || "Sistema",
+          time: formatTimeAgo(a.created_at),
+          icon: getActionIcon(a.action),
+          color: getActionColor(a.action),
+        }))
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch =
@@ -382,12 +261,7 @@ export default function DocumentManagementPlatform() {
     return matchesSearch && matchesStatus && matchesSector
   })
 
-  const stats = {
-    total: documents.length,
-    approved: documents.filter((d) => d.status === "approved").length,
-    pending: documents.filter((d) => d.status === "pending").length,
-    draft: documents.filter((d) => d.status === "draft").length,
-  }
+  // stats agora vem do useEffect
 
   // Função para filtrar documentos por categoria para o modal
   const getDocumentsByCategory = (category) => {
@@ -910,7 +784,7 @@ export default function DocumentManagementPlatform() {
             <CardDescription>Últimas ações realizadas no sistema</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentActivity.map((activity) => {
+            {recentActivityData.length > 0 ? recentActivityData.map((activity) => {
               const Icon = activity.icon
               return (
                 <div key={activity.id} className="flex items-start space-x-3">
@@ -918,15 +792,17 @@ export default function DocumentManagementPlatform() {
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                    <p className="text-sm text-gray-600 truncate">{activity.document}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-sm font-medium text-foreground">{activity.action}</p>
+                    <p className="text-sm text-muted-foreground truncate">{activity.document}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
                       {activity.user} • {activity.time}
                     </p>
                   </div>
                 </div>
               )
-            })}
+            }) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma atividade recente</p>
+            )}
           </CardContent>
         </Card>
 

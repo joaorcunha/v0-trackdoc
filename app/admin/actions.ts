@@ -97,7 +97,6 @@ export async function getCategories(): Promise<Category[]> {
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase.from("categories").select("*").order("name")
   if (error) {
-    console.error("Erro ao buscar categorias:", error)
     return []
   }
   return data
@@ -123,7 +122,6 @@ export async function createCategory(categoryData: any) {
     .select()
 
   if (error) {
-    console.error("Erro ao criar categoria:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -145,7 +143,6 @@ export async function updateCategory(id: string, categoryData: any) {
     .select()
 
   if (error) {
-    console.error("Erro ao atualizar categoria:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -158,7 +155,6 @@ export async function deleteCategory(id: string) {
   const { error } = await supabase.from("categories").delete().eq("id", id)
 
   if (error) {
-    console.error("Erro ao deletar categoria:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -170,7 +166,6 @@ export async function getDepartments(): Promise<Department[]> {
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase.from("departments").select("*").order("name")
   if (error) {
-    console.error("Erro ao buscar departamentos:", error)
     return []
   }
   return data
@@ -197,7 +192,6 @@ export async function createDepartment(departmentData: any) {
     .select()
 
   if (error) {
-    console.error("Erro ao criar departamento:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -220,7 +214,6 @@ export async function updateDepartment(id: string, departmentData: any) {
     .select()
 
   if (error) {
-    console.error("Erro ao atualizar departamento:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -233,7 +226,6 @@ export async function deleteDepartment(id: string) {
   const { error } = await supabase.from("departments").delete().eq("id", id)
 
   if (error) {
-    console.error("Erro ao deletar departamento:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -245,7 +237,6 @@ export async function getDocumentTypes(): Promise<DocumentType[]> {
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase.from("document_types").select("*").order("name")
   if (error) {
-    console.error("Erro ao buscar tipos de documento:", error)
     return []
   }
   return data
@@ -276,7 +267,6 @@ export async function createDocumentType(documentTypeData: any) {
     .select()
 
   if (error) {
-    console.error("Erro ao criar tipo de documento:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -303,7 +293,6 @@ export async function updateDocumentType(id: string, documentTypeData: any) {
     .select()
 
   if (error) {
-    console.error("Erro ao atualizar tipo de documento:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -316,7 +305,6 @@ export async function deleteDocumentType(id: string) {
   const { error } = await supabase.from("document_types").delete().eq("id", id)
 
   if (error) {
-    console.error("Erro ao deletar tipo de documento:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -329,14 +317,12 @@ export async function getUsers(): Promise<User[]> {
   const companyId = await getCurrentUserCompanyId()
 
   if (!companyId) {
-    console.error("Erro ao buscar usuários: Usuário não autenticado")
     return []
   }
 
   const { data, error } = await adminClient.from("profiles").select("*").eq("company_id", companyId).order("full_name")
 
   if (error) {
-    console.error("Erro ao buscar usuários:", error)
     return []
   }
   return data
@@ -392,7 +378,6 @@ export async function updateUser(id: string, userData: any) {
     .select()
 
   if (error) {
-    console.error("Erro ao atualizar usuário:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -416,7 +401,6 @@ export async function deleteUser(id: string) {
   const { error } = await adminClient.from("profiles").update({ status: "inactive" }).eq("id", id)
 
   if (error) {
-    console.error("Erro ao desativar usuário:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -429,7 +413,6 @@ export async function getWorkflows(): Promise<Workflow[]> {
   const { data, error } = await supabase.from("approval_workflows").select("*").order("name")
 
   if (error) {
-    console.error("Erro ao buscar workflows:", error)
     return []
   }
   return data
@@ -456,7 +439,6 @@ export async function createWorkflow(workflowData: any) {
     .select()
 
   if (error) {
-    console.error("Erro ao criar workflow:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -479,7 +461,6 @@ export async function updateWorkflow(id: string, workflowData: any) {
     .select()
 
   if (error) {
-    console.error("Erro ao atualizar workflow:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
@@ -551,9 +532,210 @@ export async function deleteNotification(id: string) {
   const { error } = await supabase.from("notifications").delete().eq("id", id).eq("company_id", companyId)
 
   if (error) {
-    console.error("Erro ao deletar notificação:", error)
     return { success: false, error: error.message }
   }
   revalidatePath("/admin")
   return { success: true }
+}
+
+/* --- DOCUMENTS --- */
+export async function getDocuments() {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from("documents")
+    .select(`
+      id,
+      title,
+      document_number,
+      version,
+      status,
+      file_type,
+      file_name,
+      created_at,
+      updated_at,
+      department:departments(name, short_name),
+      document_type:document_types(name, prefix),
+      author:profiles(full_name)
+    `)
+    .order("updated_at", { ascending: false })
+  
+  if (error) {
+    return []
+  }
+  return data || []
+}
+
+export async function getDocumentById(id: string) {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from("documents")
+    .select(`
+      *,
+      department:departments(name, short_name),
+      document_type:document_types(name, prefix),
+      author:profiles(full_name, email),
+      category:categories(name, color)
+    `)
+    .eq("id", id)
+    .single()
+  
+  if (error) {
+    return null
+  }
+  return data
+}
+
+/* --- AUDIT LOGS --- */
+export async function getAuditLogs(limit = 100) {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select(`
+      id,
+      action,
+      entity_type,
+      entity_id,
+      details,
+      ip_address,
+      user_agent,
+      created_at,
+      user:profiles(full_name, email)
+    `)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+  
+  if (error) {
+    return []
+  }
+  return data || []
+}
+
+/* --- DASHBOARD STATS --- */
+export async function getDashboardStats() {
+  const supabase = await createServerSupabaseClient()
+  
+  // Buscar contagens
+  const [documentsResult, pendingResult, usersResult, departmentsResult] = await Promise.all([
+    supabase.from("documents").select("id", { count: "exact", head: true }),
+    supabase.from("documents").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase.from("departments").select("id", { count: "exact", head: true }).eq("status", "active"),
+  ])
+  
+  return {
+    totalDocuments: documentsResult.count || 0,
+    pendingDocuments: pendingResult.count || 0,
+    totalUsers: usersResult.count || 0,
+    totalDepartments: departmentsResult.count || 0,
+  }
+}
+
+export async function getDocumentsByStatus() {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from("documents")
+    .select("status")
+  
+  if (error || !data) {
+    return { approved: 0, pending: 0, draft: 0, rejected: 0 }
+  }
+  
+  const counts = data.reduce((acc: any, doc) => {
+    acc[doc.status] = (acc[doc.status] || 0) + 1
+    return acc
+  }, {})
+  
+  return {
+    approved: counts.approved || 0,
+    pending: counts.pending || 0,
+    draft: counts.draft || 0,
+    rejected: counts.rejected || 0,
+  }
+}
+
+export async function getDocumentsByDepartment() {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from("documents")
+    .select(`
+      department:departments(name, short_name)
+    `)
+  
+  if (error || !data) {
+    return []
+  }
+  
+  const counts: Record<string, number> = {}
+  data.forEach((doc: any) => {
+    if (doc.department) {
+      const name = doc.department.short_name || doc.department.name
+      counts[name] = (counts[name] || 0) + 1
+    }
+  })
+  
+  return Object.entries(counts).map(([name, count]) => ({ name, count }))
+}
+
+export async function getRecentActivity(limit = 10) {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select(`
+      id,
+      action,
+      entity_type,
+      details,
+      created_at,
+      user:profiles(full_name)
+    `)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+  
+  if (error) {
+    return []
+  }
+  return data || []
+}
+
+/* --- APPROVAL FLOW --- */
+export async function getDocumentApprovalFlow(documentId: string) {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from("document_approvals")
+    .select(`
+      id,
+      status,
+      comment,
+      approved_at,
+      approver:profiles(full_name, email)
+    `)
+    .eq("document_id", documentId)
+    .order("order_index")
+  
+  if (error) {
+    return []
+  }
+  return data || []
+}
+
+export async function getDocumentAuditLog(documentId: string) {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select(`
+      id,
+      action,
+      details,
+      created_at,
+      ip_address,
+      user:profiles(full_name)
+    `)
+    .eq("entity_type", "document")
+    .eq("entity_id", documentId)
+    .order("created_at", { ascending: false })
+  
+  if (error) {
+    return []
+  }
+  return data || []
 }

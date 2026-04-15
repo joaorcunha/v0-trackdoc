@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,180 +8,68 @@ import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { TrendingUp, TrendingDown, FileText, Clock, Users, Download, BarChart3 } from "lucide-react"
+import { getDashboardStats, getUsers, getDepartments } from "@/app/admin/actions"
 
-const mockProductivityData = {
-  overview: {
-    totalDocuments: 187,
-    documentsThisMonth: 34,
-    averageCreationTime: 2.8,
-    mostProductiveUser: "João Silva",
-    mostProductiveDepartment: "TI",
-  },
-  userStats: [
-    {
-      id: 1,
-      name: "João Silva",
-      department: "TI",
-      documentsCreated: 28,
-      documentsApproved: 25,
-      averageTime: 2.1,
-      efficiency: 95,
-      trend: "up",
-    },
-    {
-      id: 2,
-      name: "Maria Santos",
-      department: "Qualidade",
-      documentsCreated: 24,
-      documentsApproved: 22,
-      averageTime: 2.5,
-      efficiency: 92,
-      trend: "up",
-    },
-    {
-      id: 3,
-      name: "Carlos Oliveira",
-      department: "Operações",
-      documentsCreated: 22,
-      documentsApproved: 18,
-      averageTime: 3.2,
-      efficiency: 85,
-      trend: "stable",
-    },
-    {
-      id: 4,
-      name: "Ana Costa",
-      department: "TI",
-      documentsCreated: 19,
-      documentsApproved: 17,
-      averageTime: 2.8,
-      efficiency: 88,
-      trend: "up",
-    },
-    {
-      id: 5,
-      name: "Pedro Lima",
-      department: "Segurança",
-      documentsCreated: 16,
-      documentsApproved: 14,
-      averageTime: 3.5,
-      efficiency: 82,
-      trend: "down",
-    },
-    {
-      id: 6,
-      name: "Lucia Ferreira",
-      department: "RH",
-      documentsCreated: 15,
-      documentsApproved: 13,
-      averageTime: 3.1,
-      efficiency: 86,
-      trend: "stable",
-    },
-    {
-      id: 7,
-      name: "Roberto Silva",
-      department: "Financeiro",
-      documentsCreated: 14,
-      documentsApproved: 12,
-      averageTime: 3.8,
-      efficiency: 80,
-      trend: "down",
-    },
-    {
-      id: 8,
-      name: "Fernanda Costa",
-      department: "Diretoria",
-      documentsCreated: 12,
-      documentsApproved: 11,
-      averageTime: 2.9,
-      efficiency: 90,
-      trend: "up",
-    },
-  ],
-  departmentStats: [
-    {
-      name: "TI",
-      documents: 47,
-      efficiency: 92,
-      growth: 15,
-    },
-    {
-      name: "Qualidade",
-      documents: 38,
-      efficiency: 89,
-      growth: 12,
-    },
-    {
-      name: "Operações",
-      documents: 35,
-      efficiency: 85,
-      growth: 8,
-    },
-    {
-      name: "RH",
-      documents: 28,
-      efficiency: 87,
-      growth: 10,
-    },
-    {
-      name: "Financeiro",
-      documents: 22,
-      efficiency: 82,
-      growth: -5,
-    },
-    {
-      name: "Segurança",
-      documents: 17,
-      efficiency: 84,
-      growth: 3,
-    },
-  ],
-  monthlyTrend: [
-    {
-      month: "Jan",
-      documents: 28,
-      approvals: 25,
-    },
-    {
-      month: "Fev",
-      documents: 32,
-      approvals: 29,
-    },
-    {
-      month: "Mar",
-      documents: 35,
-      approvals: 31,
-    },
-    {
-      month: "Abr",
-      documents: 31,
-      approvals: 28,
-    },
-    {
-      month: "Mai",
-      documents: 29,
-      approvals: 26,
-    },
-    {
-      month: "Jun",
-      documents: 34,
-      approvals: 30,
-    },
-  ],
-}
-
-const trendIcons = {
+const trendIcons: Record<string, React.ReactNode> = {
   up: <TrendingUp className="h-4 w-4 text-green-600" />,
   down: <TrendingDown className="h-4 w-4 text-red-600" />,
-  stable: <BarChart3 className="h-4 w-4 text-gray-600" />,
+  stable: <BarChart3 className="h-4 w-4 text-muted-foreground" />,
 }
 
 export default function ProductivityReport() {
   const [selectedPeriod, setSelectedPeriod] = useState("month")
   const [selectedDepartment, setSelectedDepartment] = useState("all")
+  const [isLoading, setIsLoading] = useState(true)
+  const [stats, setStats] = useState({ totalDocuments: 0, totalUsers: 0, totalDepartments: 0 })
+  const [users, setUsers] = useState<any[]>([])
+  const [departments, setDepartments] = useState<any[]>([])
 
-  const productivityData = mockProductivityData // Usando dados mockados em vez de dados vazios
+  const fetchData = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const [statsData, usersData, deptsData] = await Promise.all([
+        getDashboardStats(),
+        getUsers(),
+        getDepartments(),
+      ])
+      setStats(statsData)
+      setUsers(usersData)
+      setDepartments(deptsData)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  const productivityData = {
+    overview: {
+      totalDocuments: stats.totalDocuments,
+      documentsThisMonth: 0,
+      averageCreationTime: 0,
+      mostProductiveUser: users[0]?.full_name || "-",
+      mostProductiveDepartment: departments[0]?.name || "-",
+    },
+    userStats: users.map((u, i) => ({
+      id: u.id,
+      name: u.full_name,
+      department: departments.find(d => d.id === u.department_id)?.name || "N/A",
+      documentsCreated: 0,
+      documentsApproved: 0,
+      averageTime: 0,
+      efficiency: 0,
+      trend: "stable" as const,
+    })),
+    departmentStats: departments.map(d => ({
+      name: d.name,
+      documents: 0,
+      efficiency: 0,
+      growth: 0,
+    })),
+    monthlyTrend: [],
+  }
 
   return (
     <div className="space-y-6">
