@@ -42,7 +42,6 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         setIsAuthenticated(true)
         setIsLoading(false)
       } catch (err) {
-        console.error("Erro ao verificar autenticação:", err)
         setIsAuthenticated(false)
         setIsLoading(false)
         router.push("/login")

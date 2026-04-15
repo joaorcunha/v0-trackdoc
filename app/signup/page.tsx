@@ -75,12 +75,8 @@ export default function SignupPage() {
         throw new Error(result.error || "Erro ao criar conta")
       }
 
-      console.log("[v0] Cadastro concluído com sucesso, userId:", result.userId)
-
       router.push(`/signup/success?email=${encodeURIComponent(formData.email)}`)
     } catch (err: any) {
-      console.error("[v0] Erro no cadastro:", err)
-
       let errorMessage = "Erro ao criar conta. Tente novamente."
 
       if (err.message?.includes("already registered") || err.message?.includes("already exists")) {

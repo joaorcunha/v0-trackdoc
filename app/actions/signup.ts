@@ -29,8 +29,6 @@ function generateSlug(name: string): string {
 
 export async function signupUser(data: SignupData): Promise<SignupResult> {
   try {
-    console.log("[v0] Server: Iniciando cadastro para:", data.email)
-
     const adminClient = createAdminClient()
 
     // Step 1: Create company first
@@ -55,14 +53,11 @@ export async function signupUser(data: SignupData): Promise<SignupResult> {
       .single()
 
     if (companyError) {
-      console.error("[v0] Server: Erro ao criar empresa:", companyError)
       return {
         success: false,
         error: "Erro ao criar empresa: " + companyError.message,
       }
     }
-
-    console.log("[v0] Server: Empresa criada com ID:", companyData.id)
 
     const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
       email: data.email,
@@ -76,8 +71,6 @@ export async function signupUser(data: SignupData): Promise<SignupResult> {
     })
 
     if (authError) {
-      console.error("[v0] Server: Erro ao criar usuário:", authError)
-
       if (authError.message.includes("Database error")) {
         await adminClient.from("companies").delete().eq("id", companyData.id)
         return {
@@ -95,7 +88,6 @@ export async function signupUser(data: SignupData): Promise<SignupResult> {
     }
 
     if (!authData.user) {
-      console.error("[v0] Server: Usuário não foi criado")
       await adminClient.from("companies").delete().eq("id", companyData.id)
       return {
         success: false,
@@ -104,7 +96,6 @@ export async function signupUser(data: SignupData): Promise<SignupResult> {
     }
 
     const userId = authData.user.id
-    console.log("[v0] Server: Usuário criado com ID:", userId)
 
     // Step 3: Create profile using admin client
     const { error: profileError } = await adminClient.from("profiles").insert({
@@ -117,7 +108,6 @@ export async function signupUser(data: SignupData): Promise<SignupResult> {
     })
 
     if (profileError) {
-      console.error("[v0] Server: Erro ao criar perfil:", profileError)
       await adminClient.from("companies").delete().eq("id", companyData.id)
       await adminClient.auth.admin.deleteUser(userId)
       return {
@@ -126,14 +116,11 @@ export async function signupUser(data: SignupData): Promise<SignupResult> {
       }
     }
 
-    console.log("[v0] Server: Cadastro concluído com sucesso")
-
     return {
       success: true,
       userId,
     }
   } catch (error: any) {
-    console.error("[v0] Server: Erro inesperado:", error)
     return {
       success: false,
       error: error.message || "Erro inesperado ao criar conta",

@@ -17,7 +17,6 @@ export async function resendConfirmationEmail(email: string): Promise<ResendResu
     })
 
     if (error) {
-      console.error("[v0] Erro ao reenviar email:", error)
       return {
         success: false,
         error: error.message,
@@ -28,7 +27,6 @@ export async function resendConfirmationEmail(email: string): Promise<ResendResu
       success: true,
     }
   } catch (error: any) {
-    console.error("[v0] Erro inesperado ao reenviar email:", error)
     return {
       success: false,
       error: error.message || "Erro ao reenviar email",

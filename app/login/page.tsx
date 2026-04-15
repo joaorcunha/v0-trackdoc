@@ -74,8 +74,6 @@ export default function LoginPage() {
     setSuccess("")
 
     try {
-      console.log("[v0] Tentando fazer login...")
-      
       const supabase = createClient()
       
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -84,8 +82,6 @@ export default function LoginPage() {
       })
 
       if (authError) {
-        console.error("[v0] Erro de autenticação:", authError.message)
-        
         if (authError.message?.includes("Invalid login credentials")) {
           setError("Email ou senha incorretos")
         } else if (authError.message?.includes("Email not confirmed")) {
@@ -106,7 +102,6 @@ export default function LoginPage() {
         return
       }
 
-      console.log("[v0] Login bem-sucedido, redirecionando...")
       setSuccess("Login realizado com sucesso!")
 
       localStorage.setItem("isAuthenticated", "true")
@@ -115,7 +110,6 @@ export default function LoginPage() {
       router.refresh()
       router.push("/")
     } catch (err: any) {
-      console.error("[v0] Erro no login:", err)
       setError("Erro ao fazer login. Tente novamente.")
     } finally {
       setIsLoading(false)

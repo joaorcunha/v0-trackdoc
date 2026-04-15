@@ -79,26 +79,16 @@ async function getCurrentUserCompanyId(): Promise<string | null> {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    console.log("[v0] getCurrentUserCompanyId: Nenhum usuário autenticado")
     return null
   }
-
-  console.log("[v0] getCurrentUserCompanyId: Usuário autenticado:", user.id)
 
   const adminClient = createAdminClient()
   const { data: profile, error } = await adminClient.from("profiles").select("company_id").eq("id", user.id).single()
 
-  if (error) {
-    console.error("[v0] getCurrentUserCompanyId: Erro ao buscar profile:", error)
+  if (error || !profile) {
     return null
   }
 
-  if (!profile) {
-    console.error("[v0] getCurrentUserCompanyId: Profile não encontrado para usuário:", user.id)
-    return null
-  }
-
-  console.log("[v0] getCurrentUserCompanyId: company_id encontrado:", profile.company_id)
   return profile.company_id
 }
 
@@ -353,18 +343,14 @@ export async function getUsers(): Promise<User[]> {
 }
 
 export async function getCurrentUser() {
-  console.log("[v0] getCurrentUser: Iniciando busca do usuário atual")
   const supabase = await createServerSupabaseClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) {
-    console.log("[v0] getCurrentUser: Nenhum usuário autenticado")
     return null
   }
-
-  console.log("[v0] getCurrentUser: Usuário autenticado encontrado:", user.id, user.email)
 
   const adminClient = createAdminClient()
   const { data: profile, error } = await adminClient
@@ -374,11 +360,9 @@ export async function getCurrentUser() {
     .single()
 
   if (error || !profile) {
-    console.error("[v0] getCurrentUser: Erro ao buscar perfil do usuário:", error)
     return null
   }
 
-  console.log("[v0] getCurrentUser: Perfil encontrado:", profile)
   return profile
 }
 

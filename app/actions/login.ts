@@ -15,11 +15,8 @@ interface LoginResult {
 
 export async function loginUser(data: LoginData): Promise<LoginResult> {
   try {
-    console.log("[v0] Server: Tentando login para:", data.email)
-
     // Validate environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.error("[v0] Server: Variáveis de ambiente do Supabase não configuradas")
       return {
         success: false,
         error: "Erro de configuração do servidor. Contate o suporte.",
@@ -35,8 +32,6 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
     })
 
     if (authError) {
-      console.error("[v0] Server: Erro de autenticação:", authError.message, authError.status)
-      
       // Handle specific error cases
       if (authError.message?.includes("Invalid login credentials")) {
         return {
@@ -67,7 +62,6 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
     }
 
     if (!authData.user.email_confirmed_at) {
-      console.log("[v0] Server: Email não confirmado para:", authData.user.email)
       return {
         success: false,
         error: "Por favor, confirme seu email antes de fazer login. Verifique sua caixa de entrada.",
@@ -75,14 +69,11 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
       }
     }
 
-    console.log("[v0] Server: Login realizado com sucesso para:", authData.user.email)
-
     return {
       success: true,
       emailConfirmed: true,
     }
   } catch (error: any) {
-    console.error("[v0] Server: Erro inesperado no login:", error?.message || error)
     return {
       success: false,
       error: "Erro ao fazer login. Tente novamente.",
