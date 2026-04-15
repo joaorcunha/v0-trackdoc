@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { getDocumentTypes, createDocumentType, updateDocumentType, deleteDocumentType } from "@/app/admin/actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -88,88 +89,6 @@ const availableFields = [
   { key: "steps", label: "Etapas" },
 ]
 
-/* ---------- CONSTANTES ---------- */
-const mockDocumentTypes = [
-  {
-    id: 1,
-    name: "Política",
-    description: "Documentos de políticas corporativas e diretrizes estratégicas",
-    prefix: "POL",
-    color: "blue",
-    requiredFields: ["title", "author", "version", "sector"],
-    approvalRequired: true,
-    retentionPeriod: 60,
-    status: "active",
-    template: null,
-    documentsCount: 18,
-  },
-  {
-    id: 2,
-    name: "Procedimento",
-    description: "Procedimentos operacionais e instruções de trabalho",
-    prefix: "PROC",
-    color: "green",
-    requiredFields: ["title", "author", "version", "steps"],
-    approvalRequired: true,
-    retentionPeriod: 36,
-    status: "active",
-    template: null,
-    documentsCount: 24,
-  },
-  {
-    id: 3,
-    name: "Relatório",
-    description: "Relatórios gerenciais e operacionais",
-    prefix: "REL",
-    color: "yellow",
-    requiredFields: ["title", "author", "date", "period"],
-    approvalRequired: false,
-    retentionPeriod: 24,
-    status: "active",
-    template: null,
-    documentsCount: 32,
-  },
-  {
-    id: 4,
-    name: "Ata",
-    description: "Atas de reuniões e assembleias",
-    prefix: "ATA",
-    color: "purple",
-    requiredFields: ["title", "date", "participants", "decisions"],
-    approvalRequired: false,
-    retentionPeriod: 12,
-    status: "active",
-    template: null,
-    documentsCount: 15,
-  },
-  {
-    id: 5,
-    name: "Manual",
-    description: "Manuais técnicos e de operação",
-    prefix: "MAN",
-    color: "orange",
-    requiredFields: ["title", "author", "version", "category"],
-    approvalRequired: true,
-    retentionPeriod: 48,
-    status: "active",
-    template: null,
-    documentsCount: 8,
-  },
-  {
-    id: 6,
-    name: "Contrato",
-    description: "Contratos comerciais e acordos",
-    prefix: "CTR",
-    color: "red",
-    requiredFields: ["title", "author", "date", "participants"],
-    approvalRequired: true,
-    retentionPeriod: 120,
-    status: "inactive",
-    template: null,
-    documentsCount: 5,
-  },
-]
-
 /* ---------- PROPS ---------- */
 interface DocumentTypeManagementProps {
   initialDocumentTypes?: DocumentType[]
@@ -177,7 +96,7 @@ interface DocumentTypeManagementProps {
 
 /* ---------- COMPONENTE PRINCIPAL ---------- */
 export default function DocumentTypeManagement({ initialDocumentTypes = [] }: DocumentTypeManagementProps) {
-  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>(mockDocumentTypes)
+  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedType, setSelectedType] = useState<DocumentType | null>(null)
   const [showTypeModal, setShowTypeModal] = useState(false)
@@ -185,12 +104,37 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
   const [typeToDelete, setTypeToDelete] = useState<DocumentType | null>(null)
   const [viewMode, setViewMode] = useState<"grid" | "list">("list")
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
   const router = useRouter()
 
-  useEffect(() => {
-    setDocumentTypes(mockDocumentTypes)
+  const fetchDocumentTypes = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await getDocumentTypes()
+      // Mapear os dados do banco para o formato do componente
+      const mappedData = data.map((dt: any) => ({
+        id: dt.id,
+        name: dt.name,
+        description: dt.description,
+        prefix: dt.prefix,
+        color: dt.color || "blue",
+        requiredFields: dt.required_fields || [],
+        approvalRequired: dt.approval_required || false,
+        retentionPeriod: dt.retention_period || 12,
+        status: dt.status,
+        template: dt.template_content,
+        documentsCount: 0, // TODO: Calcular a partir de documents
+      }))
+      setDocumentTypes(mappedData)
+    } finally {
+      setIsLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    fetchDocumentTypes()
+  }, [fetchDocumentTypes])
 
   const filteredTypes = documentTypes.filter((type) => type.name?.toLowerCase().includes(searchTerm.toLowerCase()))
 
@@ -204,21 +148,48 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
   const handleSaveDocumentType = async (typeData: Partial<DocumentType>) => {
     setIsSaving(true)
     try {
-      toast({
-        title: "Sucesso!",
-        description: typeData.id
-          ? "Tipo de documento atualizado com sucesso."
-          : "Tipo de documento criado com sucesso.",
-      })
-      setShowTypeModal(false)
-      setSelectedType(null)
+      const dataToSave = {
+        name: typeData.name,
+        description: typeData.description,
+        prefix: typeData.prefix,
+        color: typeData.color,
+        requiredFields: typeData.requiredFields,
+        approvalRequired: typeData.approvalRequired,
+        retentionPeriod: typeData.retentionPeriod,
+        status: typeData.status,
+        template: typeData.template,
+      }
+
+      let result
+      if (typeData.id) {
+        result = await updateDocumentType(String(typeData.id), dataToSave)
+      } else {
+        result = await createDocumentType(dataToSave)
+      }
+
+      if (result.success) {
+        toast({
+          title: "Sucesso!",
+          description: typeData.id
+            ? "Tipo de documento atualizado com sucesso."
+            : "Tipo de documento criado com sucesso.",
+        })
+        setShowTypeModal(false)
+        setSelectedType(null)
+        fetchDocumentTypes()
+      } else {
+        toast({
+          title: "Erro",
+          description: result.error || "Erro ao salvar tipo de documento.",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       toast({
         title: "Erro inesperado",
         description: "Ocorreu um erro ao salvar o tipo de documento. Tente novamente.",
         variant: "destructive",
       })
-      console.error("Erro ao salvar tipo de documento:", error)
     } finally {
       setIsSaving(false)
     }
@@ -227,10 +198,21 @@ export default function DocumentTypeManagement({ initialDocumentTypes = [] }: Do
   const handleDeleteDocumentType = async () => {
     if (!typeToDelete) return
 
-    toast({
-      title: "Sucesso!",
-      description: "Tipo de documento excluído com sucesso.",
-    })
+    const result = await deleteDocumentType(String(typeToDelete.id))
+    
+    if (result.success) {
+      toast({
+        title: "Sucesso!",
+        description: "Tipo de documento excluído com sucesso.",
+      })
+      fetchDocumentTypes()
+    } else {
+      toast({
+        title: "Erro",
+        description: result.error || "Erro ao excluir tipo de documento.",
+        variant: "destructive",
+      })
+    }
     setShowDeleteConfirm(false)
     setTypeToDelete(null)
   }

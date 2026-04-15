@@ -479,10 +479,9 @@ export default function DocumentManagementPlatform() {
       a.download = fileName
       document.body.appendChild(a)
       a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      console.log("Download iniciado para:", fileName)
-    }
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  }
   }
 
   // Função para renderizar as opções do dropdown baseado no status

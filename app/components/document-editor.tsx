@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -39,7 +40,7 @@ import {
   Undo,
 } from "lucide-react"
 
-import { mockDepartments } from "@/data/mock-departments"
+// Departamentos serão carregados do Supabase
 
 const getCurrentUser = () => ({
   id: 1,
@@ -64,6 +65,7 @@ const getNextDocumentNumber = (type: string, department: string) => {
 
 export default function DocumentEditor() {
   const { toast } = useToast()
+  const supabase = createClient()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -72,8 +74,24 @@ export default function DocumentEditor() {
   const [showPreview, setShowPreview] = useState(false)
   const [showMetadataModal, setShowMetadataModal] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [departments, setDepartments] = useState<Array<{ id: number; name: string; shortName: string }>>([])
 
   const currentUser = getCurrentUser()
+
+  // Buscar departamentos do Supabase
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const { data, error } = await supabase
+        .from("departments")
+        .select("id, name, short_name")
+        .eq("status", "active")
+      
+      if (!error && data) {
+        setDepartments(data.map(d => ({ id: d.id, name: d.name, shortName: d.short_name })))
+      }
+    }
+    fetchDepartments()
+  }, [supabase])
 
   // Estados para metadados
   const [documentHeader, setDocumentHeader] = useState({
@@ -444,10 +462,10 @@ Esta política entra em vigor a partir de ${new Date().toLocaleDateString("pt-BR
                     <SelectValue placeholder="Selecione o departamento" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockDepartments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.name}>
-                        {dept.name}
-                      </SelectItem>
+{departments.map((dept) => (
+  <SelectItem key={dept.id} value={dept.name}>
+  {dept.name}
+  </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -764,10 +782,10 @@ Esta política entra em vigor a partir de ${new Date().toLocaleDateString("pt-BR
                     <SelectValue placeholder="Selecione o departamento" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockDepartments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.shortName}>
-                        {dept.name}
-                      </SelectItem>
+{departments.map((dept) => (
+  <SelectItem key={dept.id} value={dept.shortName}>
+  {dept.name}
+  </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

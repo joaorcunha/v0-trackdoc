@@ -136,9 +136,7 @@ export default function DocumentModal({ open, onOpenChange, document, mode = "cr
           .from("departments")
           .select("name, short_name, status")
           .eq("status", "active")
-        if (departmentsError) {
-          console.error("Erro ao buscar departamentos:", departmentsError)
-        } else {
+        if (!departmentsError) {
           setAvailableSectors(
             departmentsData.map((dept) => ({
               name: dept.name,
@@ -152,9 +150,7 @@ export default function DocumentModal({ open, onOpenChange, document, mode = "cr
           .from("document_types")
           .select("id, name, prefix, status")
           .eq("status", "active")
-        if (documentTypesError) {
-          console.error("Erro ao buscar tipos de documento:", documentTypesError)
-        } else {
+        if (!documentTypesError) {
           setAvailableDocumentTypes(documentTypesData)
         }
 
@@ -163,9 +159,7 @@ export default function DocumentModal({ open, onOpenChange, document, mode = "cr
           .from("categories")
           .select("id, name, description, color, status")
           .eq("status", "active")
-        if (categoriesError) {
-          console.error("Erro ao buscar categorias:", categoriesError)
-        } else {
+        if (!categoriesError) {
           setAvailableCategories(categoriesData)
         }
       }
